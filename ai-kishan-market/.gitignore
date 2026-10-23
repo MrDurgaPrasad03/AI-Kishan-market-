@@ -20,3 +20,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Temporary backend logs and generated files
+backend/backend-error.txt
+backend/startup-log.txt
+backend/classpath.txt
+backend/target/
