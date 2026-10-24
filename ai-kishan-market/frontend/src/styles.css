@@ -946,3 +946,178 @@ footer {
   color: white;
   cursor: pointer;
 }
+
+/* My Listings — marketplace-style layout */
+#my-listings {
+  width: 100%;
+  margin: 40px auto;
+  padding: 32px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+#my-listings .section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+#my-listings .eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #64805b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+#my-listings h2 {
+  margin: 0 0 8px;
+  color: #203b2c;
+  font-size: 30px;
+}
+
+#my-listings .section-heading p {
+  margin: 0;
+  color: #6d766e;
+}
+
+/* Responsive crop grid */
+#my-listings .crop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* Crop cards */
+#my-listings .crop-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e8ebe5;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(30, 55, 35, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#my-listings .crop-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(30, 55, 35, 0.12);
+}
+
+/* Crop image / emoji area */
+#my-listings .crop-card-art {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2eee7;
+}
+
+#my-listings .crop-emoji {
+  font-size: 64px;
+}
+
+/* Card content */
+#my-listings .crop-card-content {
+  padding: 18px;
+}
+
+#my-listings .crop-tag {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #edf3e8;
+  color: #42633d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#my-listings .crop-card-content h3 {
+  margin: 8px 0;
+  color: #243b2d;
+  font-size: 19px;
+}
+
+#my-listings .crop-card-content p {
+  margin: 8px 0;
+  color: #687169;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+#my-listings .crop-card-content h3:has(+ p) {
+  color: #1f3829;
+}
+
+/* Edit and Delete actions */
+#my-listings .listing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+#my-listings .listing-actions button {
+  flex: 1;
+  min-width: 70px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 9px;
+  background: #155b3c;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#my-listings .listing-actions button:hover {
+  background: #10452e;
+}
+
+#my-listings .listing-actions button:focus-visible {
+  outline: 3px solid #9ac8a9;
+  outline-offset: 3px;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+  #my-listings .crop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #my-listings {
+    padding: 24px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  #my-listings {
+    margin: 24px auto;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  #my-listings h2 {
+    font-size: 25px;
+  }
+
+  #my-listings .crop-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  #my-listings .crop-card-art {
+    min-height: 130px;
+  }
+
+  #my-listings .crop-card-content {
+    padding: 16px;
+  }
+}

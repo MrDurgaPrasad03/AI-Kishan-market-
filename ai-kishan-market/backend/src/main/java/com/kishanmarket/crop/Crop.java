@@ -1,3 +1,4 @@
+
 package com.kishanmarket.crop;
 
 import java.math.BigDecimal;
@@ -10,5 +11,6 @@ public record Crop(
     BigDecimal quantityQuintals,
     String location,
     String emoji,
-    String tag
+    String tag,
+    Long farmerId
 ) {}

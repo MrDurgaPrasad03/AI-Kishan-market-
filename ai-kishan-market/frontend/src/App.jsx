@@ -94,13 +94,15 @@ function getCropEmoji(name) {
 
 export default function App() {
   const [crops, setCrops] = useState(fallbackCrops);
+  const [myCrops, setMyCrops] = useState([]);
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
   const [selectedLocation, setSelectedLocation] = useState('All Locations');
   const [apiStatus, setApiStatus] = useState('loading');
   
-const [authToken, setAuthToken] = useState('');
-const [authUser, setAuthUser] = useState(null);
-const [authError, setAuthError] = useState('');
+  const [authToken, setAuthToken] = useState('');
+  const [authUser, setAuthUser] = useState(null);
+  const [authError, setAuthError] = useState('');
 
 
   const [formOpen, setFormOpen] = useState(false);
@@ -199,23 +201,97 @@ async function handleAuth(event, mode) {
     }
   }
 
-  useEffect(() => {
-    loadCrops();
-  }, []);
+ useEffect(() => {
+  if (authToken) {
+    loadMyCrops();
+  } else {
+    setMyCrops([]);
+  }
+}, [authToken]);
 
   
 
-const filtered = crops.filter((crop) => {
-  const matchesSearch = `${crop.name} ${crop.location} ${crop.variety || ''}`
-    .toLowerCase()
-    .includes(search.trim().toLowerCase());
 
-  const matchesLocation =
-    selectedLocation === 'All Locations' ||
-    crop.location?.toLowerCase() === selectedLocation.toLowerCase();
+async function loadMyCrops() {
+  if (!authToken) {
+    setMyCrops([]);
+    return;
+  }
 
-  return matchesSearch && matchesLocation;
-});
+  try {
+    const response = await fetch(`${API}/api/crops/my`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        Accept: 'application/json',
+      },
+    });
+
+    const text = await response.text();
+    let data = {};
+
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          `Invalid server response (${response.status}).`
+        );
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || `Could not load your crops (${response.status}).`
+      );
+    }
+
+    if (!Array.isArray(data)) {
+      throw new Error('Unexpected response from My Listings API.');
+    }
+
+    setMyCrops(data);
+  } catch (error) {
+    console.error('Unable to load your crops:', error);
+  }
+}
+
+
+const filtered = crops
+  .filter((crop) => {
+    const matchesSearch = `${crop.name} ${crop.location} ${
+      crop.variety || ''
+    }`
+      .toLowerCase()
+      .includes(search.trim().toLowerCase());
+
+    const matchesLocation =
+      selectedLocation === 'All Locations' ||
+      crop.location?.toLowerCase() === selectedLocation.toLowerCase();
+
+    return matchesSearch && matchesLocation;
+  })
+  .sort((a, b) => {
+    if (sortBy === 'price-low') {
+      return Number(a.pricePerQuintal ?? a.price ?? 0) -
+        Number(b.pricePerQuintal ?? b.price ?? 0);
+    }
+
+    if (sortBy === 'price-high') {
+      return Number(b.pricePerQuintal ?? b.price ?? 0) -
+        Number(a.pricePerQuintal ?? a.price ?? 0);
+    }
+
+    if (sortBy === 'name') {
+      return (a.name || '').localeCompare(b.name || '');
+    }
+
+    if (sortBy === 'newest') {
+      return new Date(b.createdAt || b.created_at || 0).getTime() -
+        new Date(a.createdAt || a.created_at || 0).getTime();
+    }
+
+    return 0;
+  });
 
 
 
@@ -257,6 +333,7 @@ async function handleDeleteCrop(crop) {
     setCrops((current) =>
       current.filter((item) => item.id !== crop.id)
     );
+    await loadMyCrops();
   } catch (error) {
     alert(error.message || 'Unable to delete this crop.');
   }
@@ -316,104 +393,112 @@ async function handleSaveEdit(event) {
     setFormError('');
     setFormSuccess('');
   }
+async function handleSubmit(event) {
+  event.preventDefault();
+  setFormError('');
+  setFormSuccess('');
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+  const price = Number(form.price);
+  const quantity = Number(form.quantity);
 
-    const price = Number(form.price);
-    const quantity = Number(form.quantity);
-
-    if (!form.name.trim() || !form.location.trim()) {
-      setFormError('Please enter the crop name and location.');
-      return;
-    }
-
-    if (!Number.isFinite(price) || price <= 0) {
-      setFormError('Enter a price greater than zero.');
-      return;
-    }
-
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      setFormError('Enter a quantity greater than zero.');
-      return;
-    }
-
-    const payload = {
-      name: form.name.trim(),
-      location: form.location.trim(),
-      price,
-      quantity,
-      farmerName: form.farmerName.trim(),
-      description: form.description.trim() || form.variety.trim(),
-    };
-
-    setSubmitting(true);
-
-    try {
-  if (!authToken) {
-    alert('Please log in as a farmer before adding a crop.');
+  if (!form.name.trim() || !form.location.trim()) {
+    setFormError('Please enter the crop name and location.');
     return;
   }
 
-  console.log('Logged in:', Boolean(authToken));
-
-  const response = await fetch(`${API}/api/crops`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-      
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const message = result.errors
-          ? Object.values(result.errors).join(', ')
-          : result.message ||
-            result.error ||
-            `Unable to save crop (${response.status}).`;
-
-        throw new Error(message);
-      }
-
-
-      const savedCrop = await response.json();
-
-      setCrops((current) => [
-        ...current,
-        {
-          id: savedCrop.id,
-          name: savedCrop.name,
-          variety: savedCrop.variety || savedCrop.description || form.variety || 'Fresh produce',
-          pricePerQuintal:
-            savedCrop.pricePerQuintal ?? savedCrop.price ?? price,
-          quantityQuintals:
-            savedCrop.quantityQuintals ?? savedCrop.quantity ?? quantity,
-          location: savedCrop.location,
-          emoji: savedCrop.emoji || getCropEmoji(savedCrop.name || form.name),
-          tag: savedCrop.tag || 'New listing',
-        },
-      ]);
-
-      setApiStatus('connected');
-      setFormSuccess('Your crop listing was saved successfully.');
-      setForm(initialForm);
-
-      await loadCrops();
-      setFormSuccess('Your crop listing was saved successfully.');
-    } catch (error) {
-  console.error('Crop submission failed:', error);
-  setFormError(error.message || 'Something went wrong.');
-}
-    finally {
-      setSubmitting(false);
-    }
+  if (!Number.isFinite(price) || price <= 0) {
+    setFormError('Enter a price greater than zero.');
+    return;
   }
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    setFormError('Enter a quantity greater than zero.');
+    return;
+  }
+
+  if (!authToken) {
+    setFormError('Please log in as a farmer before adding a crop.');
+    return;
+  }
+
+  const payload = {
+    name: form.name.trim(),
+    location: form.location.trim(),
+    price,
+    quantity,
+    farmerName: form.farmerName.trim(),
+    description: form.description.trim() || form.variety.trim(),
+  };
+
+  setSubmitting(true);
+
+  try {
+    const response = await fetch(`${API}/api/crops`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // Read the response body only once.
+    const text = await response.text();
+    let savedCrop = {};
+
+    if (text) {
+      try {
+        savedCrop = JSON.parse(text);
+      } catch {
+        throw new Error('Invalid server response.');
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        savedCrop.message ||
+        savedCrop.error ||
+        `Crop submission failed (${response.status}).`
+      );
+    }
+
+    setCrops((current) => [
+      ...current,
+      {
+        id: savedCrop.id,
+        name: savedCrop.name,
+        variety:
+          savedCrop.variety ||
+          savedCrop.description ||
+          form.variety ||
+          'Fresh produce',
+        pricePerQuintal:
+          savedCrop.pricePerQuintal ?? savedCrop.price ?? price,
+        quantityQuintals:
+          savedCrop.quantityQuintals ?? savedCrop.quantity ?? quantity,
+        location: savedCrop.location,
+        emoji:
+          savedCrop.emoji ||
+          getCropEmoji(savedCrop.name || form.name),
+        tag: savedCrop.tag || 'New listing',
+      },
+    ]);
+
+    setApiStatus('connected');
+    setFormSuccess('Your crop listing was saved successfully.');
+    setForm(initialForm);
+
+    await loadCrops();
+    await loadMyCrops();
+    setFormSuccess('Your crop listing was saved successfully.');
+  } catch (error) {
+    console.error('Crop submission failed:', error);
+    setFormError(error.message || 'Something went wrong.');
+  } finally {
+    setSubmitting(false);
+  }
+}
+
 
   return (
     <div className="app-shell">
@@ -506,6 +591,76 @@ async function handleSaveEdit(event) {
     >
       Log out
     </button>
+  </section>
+)}
+{authUser && (<section className="market-section" id="my-listings">
+    <div className="section-heading">
+      <div>
+        <span className="eyebrow">YOUR FARM</span>
+        <h2>My Listings</h2>
+        <p>Manage the crops you have listed for buyers.</p>
+      </div>
+    </div>
+
+    {myCrops.length === 0 ? (
+      <p>You haven't listed any crops yet.</p>
+    ) : (
+      <div className="crop-grid">
+        {myCrops.map((crop) => (
+          <article className="crop-card" key={crop.id}>
+            <div className="crop-card-art">
+              <span className="crop-emoji">
+                {crop.emoji || getCropEmoji(crop.name)}
+              </span>
+            </div>
+
+            <div className="crop-card-content">
+              <span className="crop-tag">
+                {crop.tag || 'Your listing'}
+              </span>
+
+              <h3>{crop.name}</h3>
+              <p>{crop.variety || crop.description || 'Fresh produce'}</p>
+
+              <p>
+                {crop.location}
+              </p>
+
+              <h3>
+                ₹{crop.pricePerQuintal ?? crop.price}
+              </h3>
+              <p>
+                per quintal · listed price
+              </p>
+
+              <p>
+                {crop.quantityQuintals ?? crop.quantity ?? '—'} quintals available
+              </p>
+
+              <div className="listing-actions">
+<button
+    type="button"
+    onClick={() => {
+      setEditError('');
+      setEditingCrop({
+        ...crop,
+        pricePerQuintal: crop.pricePerQuintal ?? crop.price ?? '',
+        quantityQuintals:
+          crop.quantityQuintals ?? crop.quantity ?? '',
+      });
+    }}
+>
+    Edit
+  </button>
+                <button onClick={() => handleDeleteCrop(crop)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    )}
   </section>
 )}
 

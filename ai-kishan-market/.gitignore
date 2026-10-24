@@ -26,3 +26,6 @@ backend/backend-error.txt
 backend/startup-log.txt
 backend/classpath.txt
 backend/target/
+backend/*.log
+
+/pring.datasource.password=

@@ -52,6 +52,16 @@ public class CropController {
                 .map(this::toCrop)
                 .toList();
     }
+@GetMapping("/my")
+public List<Crop> listMyCrops(Authentication authentication) {
+    Long farmerId = getAuthenticatedFarmerId(authentication);
+
+    return cropRepository.findByFarmerId(farmerId)
+            .stream()
+            .map(this::toCrop)
+            .toList();
+}
+
 
     @PostMapping
     public ResponseEntity<Crop> createCrop(
@@ -152,7 +162,8 @@ public class CropController {
                 crop.getQuantity(),
                 crop.getLocation(),
                 "🌱",
-                "Available"
+                "Available",
+                crop.getFarmerId()
         );
     }
        public record CreateCropRequest(
