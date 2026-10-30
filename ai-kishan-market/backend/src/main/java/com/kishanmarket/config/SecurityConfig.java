@@ -68,27 +68,63 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http)
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/api/health",
-                "/api/auth/register",
-                "/api/auth/login"
-            ).permitAll()
+        
+.authorizeHttpRequests(auth -> auth
+    .requestMatchers(
+        "/api/health",
+        "/api/auth/register",
+        "/api/auth/login",
+        "/api/customer/auth/register",
+        "/api/customer/auth/login"
+    ).permitAll()
 
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            .requestMatchers(
-                HttpMethod.GET,
-                "/api/crops",
-                "/api/crops/**"
-            ).permitAll()
+    // Public crop browsing
+    .requestMatchers(
+        HttpMethod.GET,
+        "/api/crops",
+        "/api/crops/**"
+    ).permitAll()
 
-            .requestMatchers(HttpMethod.POST, "/api/crops").authenticated()
-            .requestMatchers(HttpMethod.PUT, "/api/crops/**").authenticated()
-            .requestMatchers(HttpMethod.DELETE, "/api/crops/**").authenticated()
+    // Customer-only cart APIs
+    .requestMatchers("/api/cart/**").hasRole("CUSTOMER")
 
-            .anyRequest().authenticated()
-        )
+    // Customer-only checkout and order history
+    .requestMatchers(
+        HttpMethod.POST,
+        "/api/orders/checkout"
+    ).hasRole("CUSTOMER")
+
+    .requestMatchers(
+        HttpMethod.GET,
+        "/api/orders/my"
+    ).hasRole("CUSTOMER")
+
+    // Farmer-only order management
+    .requestMatchers(
+        "/api/farmer/orders/**"
+    ).hasRole("FARMER")
+
+    // Existing crop management
+    .requestMatchers(
+        HttpMethod.POST,
+        "/api/crops"
+    ).hasRole("FARMER")
+
+    .requestMatchers(
+        HttpMethod.PUT,
+        "/api/crops/**"
+    ).hasRole("FARMER")
+
+    .requestMatchers(
+        HttpMethod.DELETE,
+        "/api/crops/**"
+    ).hasRole("FARMER")
+
+    .anyRequest().authenticated()
+)
+
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint((request, response, ex) -> {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

@@ -2,6 +2,7 @@
 package com.kishanmarket.auth;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -31,39 +32,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain)
             throws ServletException, IOException {
-                System.out.println(
-    "JWT FILTER REACHED: " + request.getMethod() + " " + request.getRequestURI()
-);
 
         String header = request.getHeader("Authorization");
-
+        System.out.println("JWT DEBUG - Request: " + request.getMethod() + " " + request.getRequestURI());
+        System.out.println("JWT DEBUG - Authorization header present: " + (header != null));
+        System.out.println("JWT DEBUG - Method and path: "
+        + request.getMethod() + " " + request.getRequestURI());
+        
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
             try {
                 Claims claims = jwtService.validateAndGetClaims(token);
-                 System.out.println("JWT valid: true");
-                    System.out.println("JWT subject: " + claims.getSubject());
-                    System.out.println("JWT role: " + claims.get("role", String.class));
+                System.out.println("JWT DEBUG - Token validated successfully");
+                System.out.println("JWT DEBUG - Role: " + claims.get("role"));
+                 System.out.println("JWT DEBUG - Customer ID: " + claims.get("customerId"));
+                System.out.println("JWT DEBUG - Farmer ID: " + claims.get("farmerId"));
                 String email = claims.getSubject();
                 String role = claims.get("role", String.class);
-                Long farmerId = claims.get("farmerId", Long.class);
-                if (email != null && role != null && farmerId != null
-        && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-    var authentication = new UsernamePasswordAuthenticationToken(
-            email,
-            farmerId,
-            java.util.List.of(new SimpleGrantedAuthority("ROLE_" + role))
-    );
+                Long accountId = null;
 
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-}
+                if ("FARMER".equals(role)) {
+                    accountId = claims.get("farmerId", Long.class);
+                } else if ("CUSTOMER".equals(role)) {
+                    accountId = claims.get("customerId", Long.class);
+                }
+
+                if (email != null
+                        && role != null
+                        && accountId != null
+                        && SecurityContextHolder.getContext()
+                                .getAuthentication() == null) {
+
+                    var authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    email,
+                                    accountId,
+                                    List.of(new SimpleGrantedAuthority(
+                                            "ROLE_" + role))
+                            );
+
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authentication);
+                }
 
             } catch (JwtException | IllegalArgumentException ex) {
-                System.out.println("JWT validation failed: " + ex.getClass().getSimpleName());
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(
+                        HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
                 response.getWriter().write(
                         "{\"message\":\"Invalid or expired access token\"}");
                 return;

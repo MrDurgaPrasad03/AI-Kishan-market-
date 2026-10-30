@@ -8,6 +8,8 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.kishanmarket.customer.CustomerEntity;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -28,6 +30,7 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
+    // Existing farmer token generation
     public String generateToken(FarmerEntity farmer) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
@@ -36,6 +39,21 @@ public class JwtService {
                 .subject(farmer.getEmail())
                 .claim("farmerId", farmer.getId())
                 .claim("role", farmer.getRole())
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(signingKey)
+                .compact();
+    }
+
+    // New customer token generation
+    public String generateCustomerToken(CustomerEntity customer) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + expirationMs);
+
+        return Jwts.builder()
+                .subject(customer.getEmail())
+                .claim("customerId", customer.getId())
+                .claim("role", customer.getRole())
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey)

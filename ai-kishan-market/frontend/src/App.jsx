@@ -73,24 +73,131 @@ const initialForm = {
   description: '',
 };
 
+function getCropEmoji(cropName) {
+  const name = String(cropName || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  return cropEmojis[name] || '🌱';
+}
 const cropEmojis = {
+  // Vegetables
   tomato: '🍅',
-  paddy: '🌾',
-  rice: '🌾',
-  chilli: '🌶️',
-  chili: '🌶️',
-  banana: '🍌',
-  mango: '🥭',
   potato: '🥔',
   onion: '🧅',
+  carrot: '🥕',
+  brinjal: '🍆',
+  eggplant: '🍆',
+  cabbage: '🥬',
+  cauliflower: '🥦',
+  broccoli: '🥦',
+  spinach: '🥬',
+  lettuce: '🥬',
+  cucumber: '🥒',
+  pumpkin: '🎃',
+  bittergourd: '🥒',
+  bitter_gourd: '🥒',
+  bottle_gourd: '🥒',
+  ridge_gourd: '🥒',
+  okra: '🌱',
+  ladyfinger: '🌱',
+  beans: '🫛',
+  peas: '🫛',
+  green_peas: '🫛',
+  capsicum: '🫑',
+  bell_pepper: '🫑',
+  chilli: '🌶️',
+  chili: '🌶️',
+  garlic: '🧄',
+  ginger: '🫚',
+  radish: '🥕',
+  beetroot: '🫜',
+  sweet_potato: '🍠',
+  mushroom: '🍄',
+  corn: '🌽',
+  maize: '🌽',
+  sweetcorn: '🌽',
+  yam: '🍠',
+
+  // Fruits
+  apple: '🍎',
+  green_apple: '🍏',
+  banana: '🍌',
+  mango: '🥭',
+  orange: '🍊',
+  grapes: '🍇',
+  grape: '🍇',
+  watermelon: '🍉',
+  muskmelon: '🍈',
+  melon: '🍈',
+  pineapple: '🍍',
+  strawberry: '🍓',
+  blueberries: '🫐',
+  blueberry: '🫐',
+  cherry: '🍒',
+  cherries: '🍒',
+  peach: '🍑',
+  pear: '🍐',
+  coconut: '🥥',
+  kiwi: '🥝',
+  lemon: '🍋',
+  lime: '🍋',
+  papaya: '🥭',
+  guava: '🍐',
+  pomegranate: '🍎',
+  jackfruit: '🍈',
+  dragonfruit: '🐉',
+  avocado: '🥑',
+  fig: '🍈',
+  sapota: '🥔',
+  custard_apple: '🍈',
+  amla: '🟢',
+  dates: '🌴',
+
+  // Grains and field crops
+  paddy: '🌾',
+  rice: '🌾',
+  wheat: '🌾',
+  barley: '🌾',
+  oats: '🌾',
+  ragi: '🌾',
+  jowar: '🌾',
+  bajra: '🌾',
+  millet: '🌾',
+  maize: '🌽',
   cotton: '🌱',
-};
+  sugarcane: '🎋',
+  tobacco: '🌿',
+  tea: '🍃',
+  coffee: '☕',
+  turmeric: '🟠',
+  groundnut: '🥜',
+  peanut: '🥜',
+  soybean: '🫘',
+  soyabean: '🫘',
+  chickpea: '🫘',
+  bengal_gram: '🫘',
+  black_gram: '🫘',
+  green_gram: '🫘',
+  lentils: '🫘',
+  pulses: '🫘',
+  mustard: '🌼',
+  sunflower: '🌻',
+  sesame: '🌱',
+  coriander: '🌿',
+  cumin: '🌿',
+  mint: '🌿',
+  curry_leaves: '🌿',
+  flowers: '🌸',
+  marigold: '🌼',
+  rose: '🌹',
+
+  // Default
+  default: '🌱',
+}; 
 
 
-function getCropEmoji(name) {
-  const key = name.trim().toLowerCase();
-  return cropEmojis[key] || '🌱';
-}
 
 export default function App() {
   const [crops, setCrops] = useState(fallbackCrops);
@@ -112,7 +219,7 @@ export default function App() {
   const [formSuccess, setFormSuccess] = useState('');
   const [editingCrop, setEditingCrop] = useState(null);
   const [editError, setEditError] = useState('');
-
+  const [showFarmerAccount, setShowFarmerAccount] = useState(false);
    
 
 async function handleAuth(event, mode) {
@@ -179,6 +286,7 @@ async function handleAuth(event, mode) {
 
 
   async function loadCrops() {
+    console.log('loadCrops() called');
     try {
       const response = await fetch(`${API}/api/crops`);
 
@@ -187,12 +295,19 @@ async function handleAuth(event, mode) {
       }
 
       const data = await response.json();
+      console.log('Crops received from API:', data.length);
+      console.table(data);
 
       if (!Array.isArray(data)) {
         throw new Error('The crop API returned an unexpected response.');
       }
 
-      setCrops(data);
+      setCrops(
+  data.map((crop) => ({
+    ...crop,
+    emoji: getCropEmoji(crop.name),
+  }))
+);
       setApiStatus('connected');
     } catch (error) {
       setApiStatus('sample');
@@ -202,6 +317,10 @@ async function handleAuth(event, mode) {
   }
 
  useEffect(() => {
+  loadCrops();
+}, []);
+
+useEffect(() => {
   if (authToken) {
     loadMyCrops();
   } else {
@@ -248,8 +367,14 @@ async function loadMyCrops() {
     if (!Array.isArray(data)) {
       throw new Error('Unexpected response from My Listings API.');
     }
+  console.log('My Listings API response:', data);
 
-    setMyCrops(data);
+setMyCrops(
+  data.map((crop) => ({
+    ...crop,
+    emoji: getCropEmoji(crop.name),
+  }))
+);
   } catch (error) {
     console.error('Unable to load your crops:', error);
   }
@@ -292,19 +417,12 @@ const filtered = crops
 
     return 0;
   });
-
-
-
-
-    function openFarmerForm() {
-  alert("Join as farmer button clicked!");
+  function openFarmerForm() {
   setForm(initialForm);
   setFormError('');
   setFormSuccess('');
   setFormOpen(true);
 }
-
-
 async function handleDeleteCrop(crop) {
   if (!authToken) {
     alert('Please log in before deleting a crop.');
@@ -340,6 +458,8 @@ async function handleDeleteCrop(crop) {
 }
 
 
+
+
 async function handleSaveEdit(event) {
   event.preventDefault();
   if (!editingCrop) return;
@@ -350,14 +470,14 @@ async function handleSaveEdit(event) {
     const response = await fetch(`${API}/api/crops/${editingCrop.id}`, {
       method: 'PUT',
       headers: {
-  'Content-Type': 'application/json',
-  ...getAuthHeaders(authToken),
-},
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(authToken),
+      },
       body: JSON.stringify({
         name: editingCrop.name,
         location: editingCrop.location,
-        price: editingCrop.pricePerQuintal,
-        quantity: editingCrop.quantityQuintals,
+        price: Number(editingCrop.pricePerQuintal),
+        quantity: Number(editingCrop.quantityQuintals),
         farmerName: editingCrop.farmerName || '',
         description: editingCrop.variety || editingCrop.description || '',
       }),
@@ -369,17 +489,44 @@ async function handleSaveEdit(event) {
 
     const updated = await response.json();
 
+    // Keep the updated values consistent in both lists.
+    const savedCrop = {
+      ...editingCrop,
+      ...updated,
+      price: Number(editingCrop.pricePerQuintal),
+      quantity: Number(editingCrop.quantityQuintals),
+      pricePerQuintal: Number(editingCrop.pricePerQuintal),
+      quantityQuintals: Number(editingCrop.quantityQuintals),
+      emoji: getCropEmoji(editingCrop.name),
+    };
+
+    // Update public marketplace immediately.
     setCrops((current) =>
       current.map((item) =>
-        item.id === editingCrop.id ? { ...item, ...updated } : item
+        String(item.id) === String(editingCrop.id)
+          ? { ...item, ...savedCrop }
+          : item
+      )
+    );
+
+    // Update farmer's My Listings immediately.
+    setMyCrops((current) =>
+      current.map((item) =>
+        String(item.id) === String(editingCrop.id)
+          ? { ...item, ...savedCrop }
+          : item
       )
     );
 
     setEditingCrop(null);
+    setEditError('');
+
   } catch (error) {
     setEditError(error.message || 'Unable to update this crop.');
   }
 }
+
+
 
   function closeFarmerForm() {
     if (submitting) return;
@@ -393,6 +540,7 @@ async function handleSaveEdit(event) {
     setFormError('');
     setFormSuccess('');
   }
+
 async function handleSubmit(event) {
   event.preventDefault();
   setFormError('');
@@ -437,12 +585,11 @@ async function handleSubmit(event) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`,
+        ...getAuthHeaders(authToken),
       },
       body: JSON.stringify(payload),
     });
 
-    // Read the response body only once.
     const text = await response.text();
     let savedCrop = {};
 
@@ -462,27 +609,27 @@ async function handleSubmit(event) {
       );
     }
 
-    setCrops((current) => [
-      ...current,
-      {
-        id: savedCrop.id,
-        name: savedCrop.name,
-        variety:
-          savedCrop.variety ||
-          savedCrop.description ||
-          form.variety ||
-          'Fresh produce',
-        pricePerQuintal:
-          savedCrop.pricePerQuintal ?? savedCrop.price ?? price,
-        quantityQuintals:
-          savedCrop.quantityQuintals ?? savedCrop.quantity ?? quantity,
-        location: savedCrop.location,
-        emoji:
-          savedCrop.emoji ||
-          getCropEmoji(savedCrop.name || form.name),
-        tag: savedCrop.tag || 'New listing',
-      },
-    ]);
+    const newCrop = {
+      ...savedCrop,
+      name: savedCrop.name || payload.name,
+      location: savedCrop.location || payload.location,
+      price: savedCrop.price ?? price,
+      quantity: savedCrop.quantity ?? quantity,
+      pricePerQuintal:
+        savedCrop.pricePerQuintal ?? savedCrop.price ?? price,
+      quantityQuintals:
+        savedCrop.quantityQuintals ?? savedCrop.quantity ?? quantity,
+      farmerName: savedCrop.farmerName || payload.farmerName,
+      variety: savedCrop.variety || savedCrop.description || payload.description,
+      emoji: getCropEmoji(savedCrop.name || payload.name),
+      tag: savedCrop.tag || 'New listing',
+    };
+
+    // Immediately update public marketplace.
+    setCrops((current) => [newCrop, ...current]);
+
+    // Immediately update farmer's My Listings.
+    setMyCrops((current) => [newCrop, ...current]);
 
     setApiStatus('connected');
     setFormSuccess('Your crop listing was saved successfully.');
@@ -490,7 +637,7 @@ async function handleSubmit(event) {
 
     await loadCrops();
     await loadMyCrops();
-    setFormSuccess('Your crop listing was saved successfully.');
+
   } catch (error) {
     console.error('Crop submission failed:', error);
     setFormError(error.message || 'Something went wrong.');
@@ -518,16 +665,30 @@ async function handleSubmit(event) {
           <a href="#advisor">AI Price Advisor</a>
           <a href="#how">How it works</a>
         </nav>
-
-        <button className="outline-button" onClick={openFarmerForm}>
-          <Plus size={16} /> Join as farmer
-        </button>
+      <button
+  className="outline-button"
+  onClick={() => {
+    if (!authUser) {
+      setShowFarmerAccount(true);
+      setTimeout(() => {
+        document.getElementById('farmer-account')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 100);
+    } else {
+      openFarmerForm();
+    }
+  }}
+>
+  <Plus size={16} /> Join as farmer
+</button>
       </header>
 
       <main id="top">
         
-{!authUser && (
-  <section className="auth-panel">
+{!authUser && showFarmerAccount && (
+  <section className="auth-panel" id="farmer-account">
     <h2>Farmer Account</h2>
     <p>Register a new account or log in to manage your listings.</p>
 
