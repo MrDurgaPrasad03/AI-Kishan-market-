@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 @RestController
@@ -16,15 +17,13 @@ import jakarta.validation.constraints.Pattern;
 public class FarmerOrderController {
 
     private final OrderItemRepository orderItemRepository;
-    private final OrderRepository orderRepository;
 
     public FarmerOrderController(
-            OrderItemRepository orderItemRepository,
-            OrderRepository orderRepository) {
+            OrderItemRepository orderItemRepository) {
         this.orderItemRepository = orderItemRepository;
-        this.orderRepository = orderRepository;
     }
 
+    // View only this farmer's ordered crop items
     @GetMapping
     public List<OrderItemEntity> getFarmerOrderItems(
             Authentication authentication) {
@@ -36,8 +35,9 @@ public class FarmerOrderController {
         return orderItemRepository.findByFarmerId(farmerId);
     }
 
+    // Update an individual order item's status
     @PatchMapping("/items/{itemId}/status")
-    public OrderEntity updateOrderStatus(
+    public OrderItemEntity updateOrderItemStatus(
             Authentication authentication,
             @PathVariable Long itemId,
             @Valid @RequestBody StatusRequest request) {
@@ -48,7 +48,8 @@ public class FarmerOrderController {
 
         OrderItemEntity item = orderItemRepository.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Order item not found"));
+                        HttpStatus.NOT_FOUND,
+                        "Order item not found"));
 
         if (!farmerId.equals(item.getFarmerId())) {
             throw new ResponseStatusException(
@@ -56,10 +57,16 @@ public class FarmerOrderController {
                     "You cannot update another farmer's order item");
         }
 
-        OrderEntity order = item.getOrder();
-        order.setStatus(request.status());
+        if ("COMPLETED".equals(request.status())
+                && !"ACCEPTED".equals(item.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Only accepted orders can be completed");
+        }
 
-        return orderRepository.save(order);
+        item.setStatus(request.status());
+
+        return orderItemRepository.save(item);
     }
 
     private void requireFarmer(Authentication authentication) {
@@ -67,12 +74,15 @@ public class FarmerOrderController {
                 || authentication.getAuthorities().stream()
                 .noneMatch(a ->
                         a.getAuthority().equals("ROLE_FARMER"))) {
+
             throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "Farmer account required");
+                    HttpStatus.FORBIDDEN,
+                    "Farmer account required");
         }
     }
 
     public record StatusRequest(
+            @NotBlank(message = "Order status is required")
             @Pattern(
                 regexp = "ACCEPTED|REJECTED|COMPLETED|CANCELLED",
                 message = "Invalid order status"

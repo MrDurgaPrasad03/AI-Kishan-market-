@@ -3,6 +3,7 @@ package com.kishanmarket.customer;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "order_items")
@@ -14,6 +15,7 @@ public class OrderItemEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private OrderEntity order;
 
     @Column(name = "crop_id", nullable = false)
@@ -36,7 +38,9 @@ public class OrderItemEntity {
 
     @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal lineTotal;
-
+    
+    @Column(name = "status", nullable = false, length = 30)
+     private String status = "PENDING";
     public OrderItemEntity() {
     }
 
@@ -65,4 +69,12 @@ public class OrderItemEntity {
 
     public BigDecimal getLineTotal() { return lineTotal; }
     public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
+
+   public String getStatus() {
+    return status;
+}
+
+public void setStatus(String status) {
+    this.status = status;
+}
 }

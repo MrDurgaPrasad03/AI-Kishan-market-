@@ -210,8 +210,26 @@ export default function App() {
   const [authToken, setAuthToken] = useState('');
   const [authUser, setAuthUser] = useState(null);
   const [authError, setAuthError] = useState('');
-
-
+ // Admin account state (new functionality)
+const [showAdminLogin, setShowAdminLogin] = useState(false);
+const [adminToken, setAdminToken] = useState(
+  localStorage.getItem('adminToken') || ''
+);
+const [adminError, setAdminError] = useState('');
+const [adminUser, setAdminUser] = useState(null);
+// Admin dashboard statistics - new functionality
+const [adminStats, setAdminStats] = useState({
+  totalFarmers: 0,
+  totalCustomers: 0,
+  totalCrops: 0,
+  totalOrders: 0,
+  completedOrders: 0,
+  pendingOrders: 0,
+  completedRevenue: 0,
+});
+const [showCustomerAccount, setShowCustomerAccount] = useState(false);
+const [adminStatsLoading, setAdminStatsLoading] = useState(false);
+const [adminStatsError, setAdminStatsError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -220,8 +238,348 @@ export default function App() {
   const [editingCrop, setEditingCrop] = useState(null);
   const [editError, setEditError] = useState('');
   const [showFarmerAccount, setShowFarmerAccount] = useState(false);
+ 
+  const [customerProfile, setCustomerProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [customerToken, setCustomerToken] = useState('');
+  const [customerAuthError, setCustomerAuthError] = useState('');
+  const [customerAuthMode, setCustomerAuthMode] = useState('login');
+  const [customerTab, setCustomerTab] = useState('profile');
+  const [cartItems, setCartItems] = useState([]);
+const [cartLoading, setCartLoading] = useState(false);
+const [cartError, setCartError] = useState('');
    
+const [customerOrders, setCustomerOrders] = useState([]);
+const [ordersLoading, setOrdersLoading] = useState(false);
+const [ordersError, setOrdersError] = useState('');
 
+const [checkoutLoading, setCheckoutLoading] = useState(false);
+const [checkoutMessage, setCheckoutMessage] = useState('');
+const [paymentMethod, setPaymentMethod] = useState('CASH_ON_DELIVERY');
+const [selectedRole, setSelectedRole] = useState(null);
+
+  const loadCustomerProfile = async () => {
+    const token = localStorage.getItem("customerToken");
+
+    if (!token) {
+      setProfileError("Please log in as a customer.");
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+      setProfileError("");
+
+      const response = await fetch(
+        "http://localhost:8080/api/customer/profile",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Unable to load customer profile.");
+      }
+
+      const data = await response.json();
+      setCustomerProfile(data);
+    } catch (error) {
+      setProfileError(error.message);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+  const addToCustomerCart = async (crop) => {
+  const token = localStorage.getItem('customerToken');
+
+  if (!token) {
+    alert('Please log in as a customer to add crops to cart.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API}/api/cart/items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        cropId: crop.id,
+        quantity: 1,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Unable to add crop to cart.');
+    }
+
+    alert(`${crop.name} added to your cart successfully!`);
+
+    await loadCustomerCart();
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+  const loadCustomerCart = async () => {
+  const token = localStorage.getItem('customerToken');
+
+  if (!token) {
+    setCartError('Please log in as a customer.');
+    return;
+  }
+
+  try {
+    setCartLoading(true);
+    setCartError('');
+
+    const response = await fetch(`${API}/api/cart`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Unable to load cart.');
+    }
+
+    const data = await response.json();
+    setCartItems(data);
+  } catch (error) {
+    setCartError(error.message);
+  } finally {
+    setCartLoading(false);
+  }
+};
+
+const loadCustomerOrders = async () => {
+  const token = localStorage.getItem('customerToken');
+
+  if (!token) {
+    setOrdersError('Please log in as a customer.');
+    return;
+  }
+
+  try {
+    setOrdersLoading(true);
+    setOrdersError('');
+
+    const response = await fetch(`${API}/api/orders/my`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Unable to load your orders.');
+    }
+
+    const data = await response.json();
+    setCustomerOrders(data);
+
+  } catch (error) {
+    setOrdersError(error.message);
+  } finally {
+    setOrdersLoading(false);
+  }
+};
+
+const updateCartQuantity = async (item, newQuantity) => {
+  if (newQuantity < 1) {
+    return;
+  }
+
+  if (newQuantity > Number(item.availableQuantity)) {
+    alert(`Only ${item.availableQuantity} units are available.`);
+    return;
+  }
+
+  const token = localStorage.getItem('customerToken');
+
+  try {
+    const response = await fetch(
+      `${API}/api/cart/items/${item.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          quantity: newQuantity,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || 'Unable to update quantity.'
+      );
+    }
+
+    await loadCustomerCart();
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+
+const handleCheckout = async () => {
+  const token = localStorage.getItem('customerToken');
+
+  if (!token) {
+    alert('Please log in as a customer.');
+    return;
+  }
+
+  if (cartItems.length === 0) {
+    alert('Your cart is empty.');
+    return;
+  }
+
+  if (!window.confirm('Are you sure you want to place this order?')) {
+    return;
+  }
+
+  try {
+    setCheckoutLoading(true);
+    setCheckoutMessage('');
+
+    const response = await fetch(`${API}/api/orders/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        paymentMethod: paymentMethod,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
+        result.error ||
+        'Checkout failed.'
+      );
+    }
+
+    setCheckoutMessage(
+      `Order #${result.id} placed successfully!`
+    );
+
+    await loadCustomerCart();
+    await loadCustomerOrders();
+
+    setCustomerTab('orders');
+
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setCheckoutLoading(false);
+  }
+};
+
+
+const removeCartItem = async (itemId) => {
+  const token = localStorage.getItem('customerToken');
+
+  if (!token) {
+    alert('Please log in as a customer.');
+    return;
+  }
+
+  if (!window.confirm('Are you sure you want to remove this crop?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API}/api/cart/items/${itemId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Unable to remove item from cart.');
+    }
+
+    await loadCustomerCart();
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+async function handleCustomerAuth(event, mode) {
+  event.preventDefault();
+  setCustomerAuthError('');
+
+  const form = event.currentTarget;
+  const data = new FormData(form);
+
+  const payload = {
+    email: String(data.get('email') || '').trim(),
+    password: String(data.get('password') || ''),
+  };
+
+  if (mode === 'register') {
+    payload.fullName = String(data.get('fullName') || '').trim();
+  }
+
+  try {
+    const response = await fetch(
+      `${API}/api/customer/auth/${mode}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Customer authentication failed.');
+    }
+
+   if (mode === 'login') {
+  setCustomerToken(result.token);
+  localStorage.setItem('customerToken', result.token);
+  setCustomerAuthError('');
+
+  await loadCustomerProfile();
+
+  form.reset();
+} else {
+      setCustomerAuthError('Registration successful. Please log in.');
+      setCustomerAuthMode('login');
+      form.reset();
+    }
+  } catch (error) {
+    setCustomerAuthError(error.message);
+  }
+}
+  // Keep all your remaining existing functions here
 async function handleAuth(event, mode) {
   event.preventDefault();
   setAuthError('');
@@ -273,6 +631,7 @@ async function handleAuth(event, mode) {
       }
 
       setAuthToken(result.token);
+      localStorage.setItem('farmerToken', result.token);
       setAuthUser({ email: payload.email });
       setAuthError('');
     } else {
@@ -282,7 +641,148 @@ async function handleAuth(event, mode) {
   } catch (error) {
     setAuthError(error.message || 'Unable to connect to the server.');
   }
+
 }
+// Admin login (new functionality)
+async function handleAdminLogin(event) {
+  event.preventDefault();
+  setAdminError('');
+
+  const form = event.currentTarget;
+  const data = new FormData(form);
+
+  const payload = {
+    email: String(data.get('email') || '').trim(),
+    password: String(data.get('password') || ''),
+  };
+
+  try {
+    const response = await fetch(`${API}/api/admin/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Admin login failed.');
+    }
+
+    if (!result.token) {
+      throw new Error('Admin login response did not contain a token.');
+    }
+
+    localStorage.setItem('adminToken', result.token);
+    setAdminToken(result.token);
+    setAdminUser({ email: payload.email });
+    setAdminError('');
+    form.reset();
+  } catch (error) {
+    setAdminError(error.message || 'Unable to connect to the server.');
+  }
+}
+// Load Admin Dashboard Statistics - new functionality
+async function loadAdminStats() {
+  if (!adminToken) return;
+
+  setAdminStatsLoading(true);
+  setAdminStatsError('');
+
+  try {
+    const headers = {
+      Authorization: `Bearer ${adminToken}`,
+      Accept: 'application/json',
+    };
+
+    // Fetch dashboard counts and orders
+    const [statsResponse, ordersResponse] = await Promise.all([
+      fetch(`${API}/api/admin/dashboard/stats`, { headers }),
+      fetch(`${API}/api/admin/orders`, { headers }),
+    ]);
+
+    const stats = await statsResponse.json();
+    const orders = await ordersResponse.json();
+
+    if (!statsResponse.ok) {
+      throw new Error(
+        stats.message || 'Unable to load dashboard statistics.'
+      );
+    }
+
+    if (!ordersResponse.ok) {
+      throw new Error(
+        orders.message || 'Unable to load admin orders.'
+      );
+    }
+
+    if (!Array.isArray(orders)) {
+      throw new Error('Unexpected response from Admin Orders API.');
+    }
+
+    const completedOrders = orders.filter(
+      (order) => order.status === 'COMPLETED'
+    );
+
+    const pendingOrders = orders.filter(
+      (order) =>
+        ['PENDING', 'PLACED', 'PROCESSING'].includes(order.status)
+    );
+
+    const completedRevenue = completedOrders.reduce(
+      (total, order) => total + Number(order.totalAmount || 0),
+      0
+    );
+
+    setAdminStats({
+      totalFarmers: stats.totalFarmers ?? 0,
+      totalCustomers: stats.totalCustomers ?? 0,
+      totalCrops: stats.totalCrops ?? 0,
+      totalOrders: stats.totalOrders ?? 0,
+      completedOrders: completedOrders.length,
+      pendingOrders: pendingOrders.length,
+      completedRevenue,
+    });
+  } catch (error) {
+    setAdminStatsError(
+      error.message || 'Unable to load dashboard statistics.'
+    );
+  } finally {
+    setAdminStatsLoading(false);
+  }
+}// Automatically load statistics after Admin Login
+useEffect(() => {
+  if (adminToken) {
+    loadAdminStats();
+  }
+}, [adminToken]);
+const loadFarmerOrders = async () => {
+  const token = localStorage.getItem('farmerToken');
+
+  if (!token) {
+    console.error('Farmer token not found. Please log in.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API}/api/farmer/orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    console.log('Farmer Orders API Status:', response.status);
+    console.log('Farmer Orders API Response:', data);
+  } catch (error) {
+    console.error('Farmer Orders API Error:', error);
+  }
+};
 
 
   async function loadCrops() {
@@ -664,7 +1164,22 @@ async function handleSubmit(event) {
           <a className="active" href="#market">Marketplace</a>
           <a href="#advisor">AI Price Advisor</a>
           <a href="#how">How it works</a>
-        </nav>
+          <button
+  className="outline-button"
+  onClick={() => {
+  setShowCustomerAccount(true);
+
+  setTimeout(() => {
+    document.getElementById('customer-account')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, 100);
+}}
+>
+  Customer Login
+</button>
+       
       <button
   className="outline-button"
   onClick={() => {
@@ -683,10 +1198,30 @@ async function handleSubmit(event) {
 >
   <Plus size={16} /> Join as farmer
 </button>
+<button
+  type="button"
+  className="outline-button"
+ onClick={() => {
+  window.location.href = '/admin-login-test.html';
+    setTimeout(() => {
+      document.getElementById('admin-login')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 100);
+  }}
+>
+  <ShieldCheck size={16} /> Admin Login
+</button>
+</nav>
       </header>
 
       <main id="top">
+        {/* ROLE SELECTION SCREEN */}
+
         
+
+{/* FARMER ACCOUNT */}
 {!authUser && showFarmerAccount && (
   <section className="auth-panel" id="farmer-account">
     <h2>Farmer Account</h2>
@@ -694,15 +1229,52 @@ async function handleSubmit(event) {
 
     <form onSubmit={(event) => handleAuth(event, 'register')}>
       <h3>Create Account</h3>
-
       <label>
         Full name
         <input name="fullName" required maxLength={100} />
       </label>
-
       <label>
         Email
         <input name="email" type="email" required maxLength={150} />
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" required minLength={8} maxLength={72} />
+      </label>
+      <button type="submit">Register</button>
+    </form>
+
+    <form onSubmit={(event) => handleAuth(event, 'login')}>
+      <h3>Already registered?</h3>
+      <label>
+        Email
+        <input name="email" type="email" required />
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" required />
+      </label>
+      <button type="submit">Log in</button>
+    </form>
+
+    {authError && <p role="alert">{authError}</p>}
+  </section>
+)}
+{/* ADMIN LOGIN - new section only */}
+{showAdminLogin && !adminToken && (
+  <section className="auth-panel" id="admin-login">
+    <h2>Admin Login</h2>
+    <p>Log in to manage the Kishan Market platform.</p>
+
+    <form onSubmit={handleAdminLogin}>
+      <label>
+        Admin Email
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="username"
+        />
       </label>
 
       <label>
@@ -711,34 +1283,370 @@ async function handleSubmit(event) {
           name="password"
           type="password"
           required
-          minLength={8}
-          maxLength={72}
+          autoComplete="current-password"
         />
       </label>
 
-      <button type="submit">Register</button>
+      {adminError && (
+        <p role="alert">{adminError}</p>
+      )}
+
+      <button type="submit">Login as Admin</button>
+
+      <button
+        type="button"
+        className="outline-button"
+        onClick={() => {
+          setShowAdminLogin(false);
+          setAdminError('');
+        }}
+      >
+        Close
+      </button>
+    </form>
+  </section>
+)}
+
+{/* ADMIN DASHBOARD - new section only */}
+{adminToken && (
+  <section className="auth-panel" id="admin-dashboard">
+    <h2>Welcome to Admin Dashboard</h2>
+
+    <p>
+      Logged in as <strong>{adminUser?.email || 'Administrator'}</strong>
+    </p>
+
+    <p>Admin access is active.</p>
+    {/* ADMIN DASHBOARD STATISTICS - new functionality */}
+<div style={{
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+  gap: '16px',
+  margin: '24px 0'
+}}>
+
+  {[
+    { label: 'Total Farmers', value: adminStats.totalFarmers, icon: '👨‍🌾' },
+    { label: 'Total Customers', value: adminStats.totalCustomers, icon: '👥' },
+    { label: 'Total Crops', value: adminStats.totalCrops, icon: '🌾' },
+    { label: 'Total Orders', value: adminStats.totalOrders, icon: '📦' },
+    { label: 'Completed Orders', value: adminStats.completedOrders, icon: '✅' },
+    { label: 'Pending Orders', value: adminStats.pendingOrders, icon: '⏳' },
+    {
+      label: 'Completed Order Revenue',
+      value: `₹${adminStats.completedRevenue.toLocaleString('en-IN')}`,
+      icon: '💰'
+    },
+  ].map((stat) => (
+    <div
+      key={stat.label}
+      style={{
+        padding: '20px',
+        background: '#f0f7f1',
+        border: '1px solid #dceadd',
+        borderRadius: '12px',
+      }}
+    >
+      <div style={{ fontSize: '25px' }}>{stat.icon}</div>
+      <p style={{ margin: '10px 0', color: '#555' }}>
+        {stat.label}
+      </p>
+      <h2 style={{ margin: 0, color: '#176b3a' }}>
+        {adminStatsLoading ? 'Loading...' : stat.value}
+      </h2>
+    </div>
+  ))}
+
+</div>
+
+{adminStatsError && (
+  <p role="alert" style={{ color: 'red' }}>
+    {adminStatsError}
+  </p>
+)}
+
+<button
+  type="button"
+  onClick={loadAdminStats}
+  disabled={adminStatsLoading}
+>
+  {adminStatsLoading ? 'Refreshing...' : 'Refresh Statistics'}
+</button>
+    <button
+      type="button"
+      onClick={() => {
+        localStorage.removeItem('adminToken');
+        setAdminToken('');
+        setAdminUser(null);
+        setAdminError('');
+        setShowAdminLogin(false);
+      }}
+    >
+      Admin Logout
+    </button>
+  </section>
+)}
+{/* CUSTOMER ACCOUNT */}
+{showCustomerAccount && !customerToken && (
+  <section className="auth-panel" id="customer-account">
+    <h2>Customer Account</h2>
+    <p>Register or log in to purchase crops.</p>
+
+    <form onSubmit={(event) => handleCustomerAuth(event, 'register')}>
+      <h3>Customer Registration</h3>
+      <label>
+        Full Name
+        <input name="fullName" required maxLength={100} />
+      </label>
+      <label>
+        Email
+        <input name="email" type="email" required maxLength={150} />
+      </label>
+      <label>
+        Password
+        <input name="password" type="password" required minLength={8} maxLength={72} />
+      </label>
+      <button type="submit">Register as Customer</button>
     </form>
 
-    <form onSubmit={(event) => handleAuth(event, 'login')}>
-      <h3>Already registered?</h3>
-
+    <form onSubmit={(event) => handleCustomerAuth(event, 'login')}>
+      <h3>Customer Login</h3>
       <label>
         Email
         <input name="email" type="email" required />
       </label>
-
       <label>
         Password
         <input name="password" type="password" required />
       </label>
-
-      <button type="submit">Log in</button>
+      <button type="submit">Login as Customer</button>
     </form>
 
-    {authError && <p role="alert">{authError}</p>}
+    {customerAuthError && <p role="alert">{customerAuthError}</p>}
   </section>
 )}
+{/* CUSTOMER DASHBOARD */}
+{customerToken && (
+  <section className="auth-panel" id="customer-dashboard">
+    <h2>Welcome to Customer Dashboard</h2>
 
+    <nav className="customer-navigation">
+      <button onClick={() => setCustomerTab('profile')}>
+        My Profile
+      </button>
+
+      <button onClick={() => setCustomerTab('cart')}>
+        My Cart
+      </button>
+
+      <button onClick={() => setCustomerTab('orders')}>
+        My Orders
+      </button>
+    </nav>
+
+    {customerTab === 'profile' && (
+      <div>
+        <h3>My Profile</h3>
+
+        {profileLoading && <p>Loading profile...</p>}
+        {profileError && <p role="alert">{profileError}</p>}
+
+        {customerProfile && (
+          <>
+            <p>Name: {customerProfile.fullName}</p>
+            <p>Email: {customerProfile.email}</p>
+            <p>Customer ID: {customerProfile.id}</p>
+            <p>Role: {customerProfile.role}</p>
+          </>
+        )}
+      </div>
+    )}
+
+   
+{customerTab === 'cart' && (
+  <div className="customer-cart">
+    <h3>My Shopping Cart</h3>
+
+    <button type="button" onClick={loadCustomerCart}>
+      Refresh Cart
+    </button>
+
+    {cartLoading && <p>Loading cart...</p>}
+    {cartError && <p role="alert">{cartError}</p>}
+
+    {!cartLoading && cartItems.length === 0 && (
+      <p>Your cart is empty.</p>
+    )}
+
+    {cartItems.map((item) => (
+      <div className="cart-item" key={item.id}>
+        <h4>{item.cropName}</h4>
+
+        <p>Farmer: {item.farmerName || 'Not provided'}</p>
+        <p>Location: {item.location}</p>
+        <p>Price: ₹{Number(item.price).toLocaleString('en-IN')}</p>
+
+        <div className="cart-quantity">
+          <button
+            type="button"
+            disabled={Number(item.quantity) <= 1}
+            onClick={() =>
+              updateCartQuantity(item, Number(item.quantity) - 1)
+            }
+          >
+            -
+          </button>
+
+          <strong>{item.quantity}</strong>
+
+          <button
+            type="button"
+            disabled={
+              Number(item.quantity) >= Number(item.availableQuantity)
+            }
+            onClick={() =>
+              updateCartQuantity(item, Number(item.quantity) + 1)
+            }
+          >
+            +
+          </button>
+        </div>
+
+        <p>Available: {item.availableQuantity}</p>
+
+        <p>
+          Subtotal: ₹
+          {(Number(item.price) * Number(item.quantity)).toLocaleString('en-IN')}
+        </p>
+
+        <button
+          type="button"
+          className="remove-cart-button"
+          onClick={() => removeCartItem(item.id)}
+        >
+          Remove
+        </button>
+      </div>
+    ))}
+
+    {!cartLoading && cartItems.length > 0 && (
+      <div className="cart-total">
+        <h3>
+          Total Amount: ₹
+          {cartItems.reduce(
+            (total, item) =>
+              total + Number(item.price) * Number(item.quantity),
+            0
+          ).toLocaleString('en-IN')}
+        </h3>
+      </div>
+    )}
+  </div>
+)}
+
+{cartItems.length > 0 && (
+  <div className="checkout-section">
+    <h3>Checkout</h3>
+
+    <label htmlFor="paymentMethod">
+      Select Payment Method
+    </label>
+
+    <select
+      id="paymentMethod"
+      value={paymentMethod}
+      onChange={(event) => setPaymentMethod(event.target.value)}
+    >
+      <option value="CASH_ON_DELIVERY">
+        Cash on Delivery
+      </option>
+
+      <option value="DIRECT_TO_FARMER">
+        Direct to Farmer
+      </option>
+    </select>
+
+    <button
+      type="button"
+      onClick={handleCheckout}
+      disabled={checkoutLoading || cartLoading}
+    >
+      {checkoutLoading ? 'Placing Order...' : 'Place Order'}
+    </button>
+
+    {checkoutMessage && (
+      <p role="status">{checkoutMessage}</p>
+    )}
+  </div>
+)}
+
+
+{customerTab === 'orders' && (
+  <div className="customer-orders">
+    <h3>My Orders</h3>
+
+    <button
+      type="button"
+      onClick={loadCustomerOrders}
+      disabled={ordersLoading}
+    >
+      Refresh Orders
+    </button>
+
+    {ordersLoading && <p>Loading orders...</p>}
+
+    {ordersError && (
+      <p role="alert">{ordersError}</p>
+    )}
+
+    {!ordersLoading &&
+      customerOrders.length === 0 && (
+        <p>You haven't placed any orders yet.</p>
+      )}
+
+    {customerOrders.map((order) => (
+      <div className="order-card" key={order.id}>
+        <h4>Order #{order.id}</h4>
+
+        <p>
+          Date: {new Date(order.createdAt).toLocaleString('en-IN')}
+        </p>
+
+        <p>
+          Total: ₹
+          {Number(order.totalAmount).toLocaleString('en-IN')}
+        </p>
+
+        <p>
+          Payment: {order.paymentMethod?.replaceAll('_', ' ')}
+        </p>
+
+        <p>
+          Payment Status: {order.paymentStatus}
+        </p>
+
+        <p>
+          Order Status: {order.status}
+        </p>
+      </div>
+    ))}
+  </div>
+)}
+
+    <button
+      type="button"
+      onClick={() => {
+        localStorage.removeItem('customerToken');
+        setCustomerToken('');
+        setCustomerProfile(null);
+        setProfileError('');
+        setCustomerTab('profile');
+      }}
+    >
+      Logout
+    </button>
+  </section>
+)}
 {authUser && (
   <section className="auth-panel">
     <p>Logged in as <strong>{authUser.email}</strong></p>
@@ -762,7 +1670,9 @@ async function handleSubmit(event) {
         <p>Manage the crops you have listed for buyers.</p>
       </div>
     </div>
-
+   <button type="button" onClick={loadFarmerOrders}>
+  Test Farmer Orders
+</button>
     {myCrops.length === 0 ? (
       <p>You haven't listed any crops yet.</p>
     ) : (
@@ -993,6 +1903,14 @@ async function handleSubmit(event) {
   >
     Delete
   </button>
+   {customerToken && (
+    <button
+      type="button"
+      onClick={() => addToCustomerCart(crop)}
+    >
+      Add to Cart
+    </button>
+  )}
 </div>
 
                   </div>
@@ -1092,21 +2010,75 @@ async function handleSubmit(event) {
           )}
         </section>
 
-        <section className="advisor" id="advisor">
-          <div className="advisor-symbol">✳</div>
-          <div>
-            <div className="eyebrow">COMING IN THE NEXT PHASE</div>
-            <h2>Sell with more insight.</h2>
-            <p>
-              Our planned AI Mandi Price Advisor will compare market
-              observations, estimate transport costs and help you review
-              potential net proceeds.
-            </p>
-          </div>
-          <div className="advisor-pill">
-            AI PRICE ADVISOR <ArrowUpRight size={16} />
-          </div>
-        </section>
+<section className="advisor" id="advisor">
+  <div className="eyebrow">SMART FARMING ASSISTANT</div>
+  <h2>🌾 AI Mandi Price Advisor</h2>
+  <p>
+    Estimate your crop revenue and potential earnings before selling.
+  </p>
+
+  <div className="advisor-calculator">
+    <label>
+      Select Crop
+      <select id="advisorCrop">
+        <option value="Rice">Rice</option>
+        <option value="Paddy">Paddy</option>
+        <option value="Tomato">Tomato</option>
+        <option value="Onion">Onion</option>
+        <option value="Potato">Potato</option>
+        <option value="Chilli">Chilli</option>
+        <option value="Maize">Maize</option>
+      </select>
+    </label>
+
+    <label>
+      Quantity (KG)
+      <input id="advisorQuantity" type="number" min="1" placeholder="Enter quantity" />
+    </label>
+
+    <label>
+      Market Price (₹ per KG)
+      <input id="advisorPrice" type="number" min="0" step="0.01" placeholder="Enter price" />
+    </label>
+
+    <label>
+      Transportation Cost (₹)
+      <input id="advisorTransport" type="number" min="0" placeholder="Enter transport cost" />
+    </label>
+
+    <button type="button" onClick={() => {
+      const crop = document.getElementById('advisorCrop').value;
+      const quantity = Number(document.getElementById('advisorQuantity').value);
+      const price = Number(document.getElementById('advisorPrice').value);
+      const transport = Number(document.getElementById('advisorTransport').value);
+
+      if (!Number.isFinite(quantity) || quantity <= 0 ||
+          !Number.isFinite(price) || price <= 0 ||
+          !Number.isFinite(transport) || transport < 0) {
+        alert('Please enter valid quantity, market price and transportation cost.');
+        return;
+      }
+
+      const gross = quantity * price;
+      const net = gross - transport;
+
+      document.getElementById('advisorResult').innerHTML = `
+        <h3>Price Estimation Result</h3>
+        <p>Crop: ${crop}</p>
+        <p>Quantity: ${quantity.toLocaleString('en-IN')} KG</p>
+        <p>Gross Revenue: ₹${gross.toLocaleString('en-IN', {maximumFractionDigits: 2})}</p>
+        <p>Transportation: ₹${transport.toLocaleString('en-IN', {maximumFractionDigits: 2})}</p>
+        <h3>Estimated Net Earnings: ₹${net.toLocaleString('en-IN', {maximumFractionDigits: 2})}</h3>
+        <p>Estimated break-even price: ₹${(transport / quantity + price).toFixed(2)} per KG</p>
+      `;
+    }}>
+      Calculate Crop Price
+    </button>
+
+    <div id="advisorResult" aria-live="polite"></div>
+  </div>
+</section>
+
 
         <section className="how-section" id="how">
           <div className="eyebrow">SIMPLE BY DESIGN</div>

@@ -1,0 +1,1909 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Kishan Market - Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f4f6f8;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #16834a;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            background: #eaf5ee;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .stat h2 {
+            color: #16834a;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        
+/* ADMIN DASHBOARD DESIGN */
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f1;
+    color: #24352b;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 30px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+#mainTitle {
+    color: #176b3a;
+    font-size: 32px;
+    margin-bottom: 25px;
+}
+
+/* COLLAPSIBLE DASHBOARD SECTIONS */
+
+.admin-accordion {
+    background: #ffffff;
+    border: 1px solid #dce8df;
+    border-radius: 10px;
+    margin: 14px 0;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.admin-accordion[open] {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+}
+
+.admin-accordion summary {
+    padding: 18px 20px;
+    background: #eaf5ed;
+    color: #176b3a;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    list-style-position: inside;
+}
+
+.admin-accordion summary:hover {
+    background: #d9efdf;
+}
+
+.admin-accordion[open] summary {
+    border-bottom: 1px solid #dce8df;
+}
+
+.admin-accordion > div {
+    padding: 15px;
+}
+
+/* STATISTICS CARDS */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    padding: 18px;
+}
+
+.stat {
+    background: #eaf5ed;
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #d5e9da;
+}
+
+.stat h3 {
+    color: #45634e;
+}
+
+.stat h2 {
+    color: #16834a;
+    font-size: 30px;
+}
+
+/* BUTTON DESIGN */
+
+button {
+    border-radius: 7px;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    filter: brightness(0.92);
+    transform: translateY(-1px);
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+    .container {
+        margin: 10px;
+        padding: 16px;
+    }
+
+    #mainTitle {
+        font-size: 25px;
+    }
+
+    .admin-accordion summary {
+        font-size: 15px;
+        padding: 15px;
+    }
+}
+
+/* ADMIN WELCOME HEADER */
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, #176b3a, #239653);
+    color: white;
+    padding: 24px;
+    border-radius: 14px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(23, 107, 58, 0.15);
+}
+
+.admin-header h2 {
+    margin: 0 0 8px;
+    color: white;
+}
+
+.admin-header p {
+    margin: 0;
+    color: #e5f5e9;
+}
+
+.logout-btn {
+    width: auto;
+    min-width: 100px;
+    background: #ffffff;
+    color: #176b3a;
+    font-weight: bold;
+    padding: 12px 22px;
+}
+
+.logout-btn:hover {
+    background: #eaf5ed;
+}
+
+    </style>
+</head>
+<body>
+
+
+    
+
+<div class="container">
+<h1 id="mainTitle">AI Kishan Market</h1>
+
+<!-- ADMIN LOGIN -->
+<div id="loginPanel">
+    <h2>Admin Login</h2>
+
+    <form id="loginForm">
+        <input
+            type="email"
+            id="email"
+            value="admin@kishanmarket.com"
+            required
+        >
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter admin password"
+            required
+        >
+
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+<p id="message"></p>
+
+    <!-- ADMIN DASHBOARD -->
+    <div id="dashboard" hidden>
+    
+<!-- ADMIN WELCOME HEADER -->
+<div class="admin-header">
+
+    <div>
+        <h2>Welcome, Admin! 👋</h2>
+        <p>Manage your AI Kishan Market operations.</p>
+    </div>
+
+    <button type="button" class="logout-btn" onclick="adminLogout()">
+        Logout
+    </button>
+
+</div>
+
+        <!-- DASHBOARD STATISTICS -->
+        <hr>
+        <details class="admin-accordion">
+            <summary>Dashboard Statistics</summary>
+
+            <div class="stats">
+                <div class="stat">
+                    <h3>Total Farmers</h3>
+                    <h2 id="farmers">-</h2>
+                </div>
+
+                <div class="stat">
+                    <h3>Total Customers</h3>
+                    <h2 id="customers">-</h2>
+                </div>
+
+                <div class="stat">
+                    <h3>Total Crops</h3>
+                    <h2 id="crops">-</h2>
+                </div>
+
+                <div class="stat">
+                    <h3>Total Orders</h3>
+                    <h2 id="orders">-</h2>
+                </div>
+            </div>
+        </details>
+
+        <!-- DASHBOARD ANALYTICS -->
+        <hr>
+        <details class="admin-accordion">
+            <summary>Dashboard Analytics</summary>
+
+            <div style="padding:15px 0;">
+                <button onclick="loadAnalytics()"
+                    style="background:#0d6efd;">
+                    Refresh Analytics
+                </button>
+
+                <div id="analyticsCards"
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin:20px 0;">
+                </div>
+
+                <div style="background:white;padding:20px;margin:20px 0;border-radius:10px;">
+                    <h3>Monthly Revenue</h3>
+                    <div id="monthlyRevenueChart"></div>
+                </div>
+            </div>
+        </details>
+
+        <!-- ORDERS BY STATUS -->
+        <details class="admin-accordion">
+            <summary>Orders by Status</summary>
+
+            <div style="background:white;padding:20px;margin:20px 0;border-radius:10px;">
+                <div id="orderStatusChart"></div>
+            </div>
+        </details>
+
+        <!-- TOP SELLING CROPS -->
+        <details class="admin-accordion">
+            <summary>Top-Selling Crops</summary>
+
+            <div style="background:white;padding:20px;margin:20px 0;border-radius:10px;">
+                <div id="topSellingCrops">
+                    Loading top-selling crops...
+                </div>
+            </div>
+        </details>
+
+        <!-- PAYMENT ANALYTICS -->
+        <details class="admin-accordion">
+            <summary>Payment Analytics</summary>
+
+            <div style="background:white;padding:20px;margin:20px 0;border-radius:10px;">
+                <div id="paymentAnalytics">
+                    Loading payment analytics...
+                </div>
+            </div>
+        </details>
+
+        <hr>
+
+        <!-- FARMER MANAGEMENT -->
+        <details class="admin-accordion">
+            <summary>Farmer Management</summary>
+
+            <button onclick="loadFarmers()">
+                View All Farmers
+            </button>
+
+            <div id="farmerList"></div>
+        </details>
+
+        <hr>
+
+        <!-- CUSTOMER MANAGEMENT -->
+        <details class="admin-accordion">
+            <summary>Customer Management</summary>
+
+            <button onclick="loadCustomers()">
+                View All Customers
+            </button>
+
+            <div id="customerList"></div>
+        </details>
+
+        <hr>
+
+        <!-- ORDER MANAGEMENT -->
+        <details class="admin-accordion">
+            <summary>Order Management</summary>
+
+            <div style="margin:15px 0;padding:15px;background:#f5f5f5;border-radius:8px;">
+
+                <h3>Search Orders</h3>
+
+                <input
+                    type="text"
+                    id="orderSearch"
+                    placeholder="Search by Order ID, customer name or email"
+                    style="padding:10px;width:300px;max-width:100%;border:1px solid #ccc;border-radius:5px;"
+                >
+
+                <button
+                    onclick="searchOrders()"
+                    style="padding:10px 15px;background:#198754;color:white;border:none;border-radius:5px;cursor:pointer;"
+                >
+                    Search
+                </button>
+
+                <button
+                    onclick="loadOrders()"
+                    style="padding:10px 15px;background:#555;color:white;border:none;border-radius:5px;cursor:pointer;"
+                >
+                    Reset
+                </button>
+
+                <hr>
+
+                <h3>Filter Orders</h3>
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+                    <select
+                        id="orderStatusFilter"
+                        style="padding:10px;border-radius:5px;"
+                    >
+                        <option value="">All Order Statuses</option>
+                        <option value="PLACED">Placed</option>
+                        <option value="PROCESSING">Processing</option>
+                        <option value="ACCEPTED">Accepted</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="REJECTED">Rejected</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+
+                    <select
+                        id="paymentStatusFilter"
+                        style="padding:10px;border-radius:5px;"
+                    >
+                        <option value="">All Payment Statuses</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="REFUNDED">Refunded</option>
+                    </select>
+
+                    <button
+                        onclick="filterOrders()"
+                        style="padding:10px 15px;background:#0d6efd;color:white;border:none;border-radius:5px;cursor:pointer;"
+                    >
+                        Apply Filters
+                    </button>
+
+                    <button
+                        onclick="resetOrderFilters()"
+                        style="padding:10px 15px;background:#555;color:white;border:none;border-radius:5px;cursor:pointer;"
+                    >
+                        Clear Filters
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- VIEW ALL ORDERS -->
+            <button onclick="loadOrders()">
+                View All Orders
+            </button>
+
+            <!-- EXPORT ORDERS -->
+            <button
+                onclick="exportOrdersToCSV()"
+                style="background:#198754;padding:10px 15px;border-radius:5px;"
+            >
+                Export Orders to Excel
+            </button>
+
+            <!-- ORDER RESULTS -->
+            <div id="orderList"></div>
+
+            <div id="orderPagination"
+                style="display:flex;justify-content:center;align-items:center;gap:12px;margin:20px 0;flex-wrap:wrap;">
+            </div>
+
+        </details>
+
+        <!-- ORDER DETAILS MODAL -->
+        <div id="orderDetailsModal"
+            style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;overflow:auto;padding:30px;">
+
+            <div style="background:white;max-width:650px;margin:30px auto;padding:20px;border-radius:10px;">
+
+                <h2>Order Details</h2>
+
+                <div id="orderDetailsContent"></div>
+
+                <button onclick="closeOrderDetails()"
+                    style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:5px;cursor:pointer;">
+                    Close
+                </button>
+
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- CROP MANAGEMENT -->
+        <details class="admin-accordion">
+            <summary>Crop Management</summary>
+
+            <button onclick="loadCrops()">
+                View All Crops
+            </button>
+
+            <div id="cropList"></div>
+        </details>
+
+    </div>
+    <!-- END ADMIN DASHBOARD -->
+
+</div>
+<!-- END CONTAINER -->
+
+
+<script>
+    const API = "http://localhost:8080";
+
+    document.getElementById("loginForm")
+        .addEventListener("submit", async (event) => {
+
+            event.preventDefault();
+
+            const message = document.getElementById("message");
+            message.textContent = "Logging in...";
+
+            try {
+                const response = await fetch(
+                    API + "/api/admin/auth/login",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: document.getElementById("email").value,
+                            password: document.getElementById("password").value
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.token) {
+                    throw new Error(data.message || "Login failed");
+                }
+
+                sessionStorage.setItem("adminToken", data.token);
+
+                message.textContent = "Admin login successful!";
+
+                await loadDashboard();
+
+            } catch (error) {
+                message.textContent = "Error: " + error.message;
+            }
+        });
+        function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+  
+async function loadFarmers() {
+    const token = sessionStorage.getItem("adminToken");
+    const farmerList = document.getElementById("farmerList");
+
+    if (!token) {
+        farmerList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    farmerList.textContent = "Loading farmers...";
+
+    try {
+        const response = await fetch(
+            API + "/api/admin/farmers",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const farmers = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                farmers.message || "Unable to load farmers"
+            );
+        }
+
+        if (farmers.length === 0) {
+            farmerList.textContent = "No farmers registered yet.";
+            return;
+        }
+
+        farmerList.innerHTML = farmers.map(farmer => `
+            <div style="background:#eaf5ee;padding:15px;margin:10px 0;border-radius:8px">
+                <h3>${escapeHtml(farmer.fullName)}</h3>
+                <p>Email: ${escapeHtml(farmer.email)}</p>
+                <p>Role: ${escapeHtml(farmer.role)}</p>
+                <p>ID: ${farmer.id}</p>
+            </div>
+        `).join("");
+
+    } catch (error) {
+        farmerList.textContent = "Error: " + error.message;
+    }
+}  
+async function loadCustomers() {
+    const token = sessionStorage.getItem("adminToken");
+    const customerList = document.getElementById("customerList");
+
+    if (!token) {
+        customerList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    customerList.textContent = "Loading customers...";
+
+    try {
+        const response = await fetch(
+            API + "/api/admin/customers",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const customers = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                customers.message || "Unable to load customers"
+            );
+        }
+
+        if (customers.length === 0) {
+            customerList.textContent = "No customers registered yet.";
+            return;
+        }
+
+        customerList.innerHTML = customers.map(customer => `
+            <div style="background:#eaf5ee;padding:15px;margin:10px 0;border-radius:8px">
+                <h3>${escapeHtml(customer.fullName)}</h3>
+                <p>Email: ${escapeHtml(customer.email)}</p>
+                <p>Role: ${escapeHtml(customer.role)}</p>
+                <p>ID: ${customer.id}</p>
+                <p>Registered: ${escapeHtml(customer.createdAt || "-")}</p>
+            </div>
+        `).join("");
+
+    } catch (error) {
+        customerList.textContent = "Error: " + error.message;
+    }
+}
+
+
+
+// Load all orders
+async function loadOrders() {
+    const token = sessionStorage.getItem("adminToken");
+    const orderList = document.getElementById("orderList");
+
+    if (!token) {
+        orderList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    orderList.textContent = "Loading orders...";
+
+    try {
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error(orders.message || "Unable to load orders");
+        }
+
+        displayOrders(orders);
+
+    } catch (error) {
+        orderList.textContent = "Error: " + error.message;
+    }
+}
+// ORDER PAGINATION
+let currentOrders = [];
+let currentOrderPage = 1;
+const ORDERS_PER_PAGE = 10;
+// Display orders (reusable for search and view all)
+
+// Display orders with pagination
+function displayOrders(orders) {
+    currentOrders = orders || [];
+    currentOrderPage = 1;
+    renderOrdersPage();
+}
+
+
+// Render the selected page
+function renderOrdersPage() {
+    const orderList = document.getElementById("orderList");
+    const pagination = document.getElementById("orderPagination");
+
+    if (currentOrders.length === 0) {
+        orderList.textContent = "No matching orders found.";
+        pagination.innerHTML = "";
+        return;
+    }
+
+    const totalPages = Math.ceil(
+        currentOrders.length / ORDERS_PER_PAGE
+    );
+
+    // Keep page number within valid range
+    currentOrderPage = Math.max(
+        1,
+        Math.min(currentOrderPage, totalPages)
+    );
+
+    const startIndex =
+        (currentOrderPage - 1) * ORDERS_PER_PAGE;
+
+    const endIndex = startIndex + ORDERS_PER_PAGE;
+
+    const pageOrders = currentOrders.slice(
+        startIndex,
+        endIndex
+    );
+
+    orderList.innerHTML = pageOrders.map(order => `
+        <div style="background:#eaf5ee;padding:15px;margin:10px 0;border-radius:8px">
+
+            <h3>Order #${order.id}</h3>
+
+            <p>Customer: ${escapeHtml(order.customerName)}</p>
+            <p>Email: ${escapeHtml(order.customerEmail)}</p>
+            <p>Payment Method: ${escapeHtml(order.paymentMethod)}</p>
+            <p>Payment Status: ${escapeHtml(order.paymentStatus)}</p>
+            <p>Total Amount: ₹${order.totalAmount}</p>
+            <p>Order Status: ${escapeHtml(order.status)}</p>
+            <p>Order Date: ${escapeHtml(order.createdAt)}</p>
+
+            <button onclick="viewOrderDetails(${order.id})"
+                style="padding:8px 15px;background:#0d6efd;color:white;border:none;border-radius:5px;cursor:pointer;">
+                View Details
+            </button>
+
+            <h4>Purchased Items</h4>
+
+            ${(order.items || []).map(item => `
+                <div style="background:white;padding:10px;margin:8px 0;border-radius:6px">
+
+                    <strong>${escapeHtml(item.cropName)}</strong>
+                    <p>Farmer: ${escapeHtml(item.farmerName || "-")}</p>
+                    <p>Quantity: ${item.quantity}</p>
+                    <p>Unit Price: ₹${item.unitPrice}</p>
+                    <p>Line Total: ₹${item.lineTotal}</p>
+                    <p>Current Item Status: ${escapeHtml(item.status || "PENDING")}</p>
+
+                    <label for="status-${item.id}">Change Status:</label>
+
+                    <select id="status-${item.id}" style="padding:7px;margin:5px">
+                        <option value="PENDING" ${item.status === "PENDING" || !item.status ? "selected" : ""}>Pending</option>
+                        <option value="ACCEPTED" ${item.status === "ACCEPTED" ? "selected" : ""}>Accepted</option>
+                        <option value="REJECTED" ${item.status === "REJECTED" ? "selected" : ""}>Rejected</option>
+                        <option value="COMPLETED" ${item.status === "COMPLETED" ? "selected" : ""}>Completed</option>
+                        <option value="CANCELLED" ${item.status === "CANCELLED" ? "selected" : ""}>Cancelled</option>
+                    </select>
+
+                    <button onclick="updateAdminItemStatus(${item.id})"
+                        style="padding:7px 12px;background:#198754;color:white;border:none;border-radius:5px;cursor:pointer">
+                        Update Status
+                    </button>
+
+                </div>
+            `).join("")}
+
+        </div>
+    `).join("");
+
+
+    // Pagination information and buttons
+    pagination.innerHTML = `
+        <button
+            onclick="changeOrderPage(${currentOrderPage - 1})"
+            ${currentOrderPage === 1 ? "disabled" : ""}
+            style="width:auto;padding:10px 18px;background:#555;color:white;border:none;border-radius:5px;">
+            Previous
+        </button>
+
+        <span style="font-weight:bold;">
+            Page ${currentOrderPage} of ${totalPages}
+            | Total Orders: ${currentOrders.length}
+        </span>
+
+        <button
+            onclick="changeOrderPage(${currentOrderPage + 1})"
+            ${currentOrderPage === totalPages ? "disabled" : ""}
+            style="width:auto;padding:10px 18px;background:#16834a;color:white;border:none;border-radius:5px;">
+            Next
+        </button>
+    `;
+}
+
+
+// Move between pages
+function changeOrderPage(page) {
+    currentOrderPage = page;
+    renderOrdersPage();
+
+    document.getElementById("orderList").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+// ADMIN DASHBOARD ANALYTICS
+async function loadAnalytics() {
+
+    const token = sessionStorage.getItem("adminToken");
+
+    const cards = document.getElementById("analyticsCards");
+    const revenueChart = document.getElementById("monthlyRevenueChart");
+    const statusChart = document.getElementById("orderStatusChart");
+     if (!cards || !revenueChart || !statusChart) {
+    console.error("Analytics HTML elements are missing.");
+    return;
+}
+    if (!token) {
+        cards.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    cards.textContent = "Loading analytics...";
+
+    try {
+
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error("Unable to load analytics.");
+        }
+
+        // Calculate order statistics
+        const totalOrders = orders.length;
+
+        const completedOrders = orders.filter(
+            order => order.status === "COMPLETED"
+        );
+
+        const pendingOrders = orders.filter(
+            order => order.status === "PLACED" ||
+                     order.status === "PENDING"
+        );
+
+        const cancelledOrders = orders.filter(
+            order => order.status === "CANCELLED"
+        );
+
+        const totalRevenue = completedOrders.reduce(
+            (sum, order) => sum + Number(order.totalAmount || 0),
+            0
+        );
+
+        // Display analytics cards
+        const statistics = [
+            {
+                title: "Total Orders",
+                value: totalOrders,
+                color: "#0d6efd"
+            },
+            {
+                title: "Completed Orders",
+                value: completedOrders.length,
+                color: "#198754"
+            },
+            {
+                title: "Pending Orders",
+                value: pendingOrders.length,
+                color: "#fd7e14"
+            },
+            {
+                title: "Cancelled Orders",
+                value: cancelledOrders.length,
+                color: "#dc3545"
+            },
+            {
+                title: "Completed Order Revenue",
+                value: "₹" + totalRevenue.toLocaleString("en-IN"),
+                color: "#6f42c1"
+            }
+        ];
+
+        cards.innerHTML = statistics.map(stat => `
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:10px;
+                border-left:5px solid ${stat.color};
+                box-shadow:0 2px 8px rgba(0,0,0,0.08);
+            ">
+                <h4 style="margin:0;color:#555;">
+                    ${stat.title}
+                </h4>
+
+                <h2 style="color:${stat.color};margin-bottom:0;">
+                    ${stat.value}
+                </h2>
+            </div>
+        `).join("");
+
+
+        // Calculate monthly completed-order revenue
+        const monthlyRevenue = {};
+
+        completedOrders.forEach(order => {
+
+            if (!order.createdAt) return;
+
+            const date = new Date(order.createdAt);
+
+            if (isNaN(date.getTime())) return;
+
+            const month = date.toLocaleString("en-IN", {
+                month: "short",
+                year: "numeric"
+            });
+
+            monthlyRevenue[month] =
+                (monthlyRevenue[month] || 0) +
+                Number(order.totalAmount || 0);
+        });
+
+        const months = Object.keys(monthlyRevenue);
+
+        if (months.length === 0) {
+
+            revenueChart.innerHTML =
+                "<p>No completed-order revenue available yet.</p>";
+
+        } else {
+
+            const maxRevenue = Math.max(
+                ...Object.values(monthlyRevenue),
+                1
+            );
+
+            revenueChart.innerHTML = months.map(month => {
+
+                const amount = monthlyRevenue[month];
+
+                const width = (amount / maxRevenue) * 100;
+
+                return `
+                    <div style="margin:15px 0;">
+                        <strong>${month}</strong>
+
+                        <div style="
+                            background:#e9ecef;
+                            height:25px;
+                            border-radius:5px;
+                            overflow:hidden;
+                        ">
+                            <div style="
+                                background:#198754;
+                                height:100%;
+                                width:${width}%;
+                            "></div>
+                        </div>
+
+                        <p>₹${amount.toLocaleString("en-IN")}</p>
+                    </div>
+                `;
+
+            }).join("");
+        }
+
+
+        // Calculate order status distribution
+        const statuses = [
+            "PLACED",
+            "PROCESSING",
+            "ACCEPTED",
+            "COMPLETED",
+            "REJECTED",
+            "CANCELLED"
+        ];
+
+        statusChart.innerHTML = statuses.map(status => {
+
+            const count = orders.filter(
+                order => order.status === status
+            ).length;
+
+            const percentage = totalOrders > 0
+                ? (count / totalOrders) * 100
+                : 0;
+
+            return `
+                <div style="margin:15px 0;">
+
+                    <strong>${status}</strong>
+
+                    <div style="
+                        background:#e9ecef;
+                        height:22px;
+                        border-radius:5px;
+                        overflow:hidden;
+                    ">
+
+                        <div style="
+                            background:#0d6efd;
+                            height:100%;
+                            width:${percentage}%;
+                        "></div>
+
+                    </div>
+
+                    <p>${count} orders (${percentage.toFixed(1)}%)</p>
+
+                </div>
+            `;
+
+        }).join("");
+        await loadTopSellingCrops();
+        await loadPaymentAnalytics();
+
+    } catch (error) {
+
+        console.error(error);
+
+        cards.textContent = "Analytics Error: " + error.message;
+    }
+}
+// TOP-SELLING CROPS ANALYTICS
+async function loadTopSellingCrops() {
+
+    const container = document.getElementById("topSellingCrops");
+    const token = sessionStorage.getItem("adminToken");
+
+    try {
+
+        const response = await fetch(API + "/api/admin/orders", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Unable to load crop sales data.");
+        }
+
+        const orders = await response.json();
+
+        const cropSales = {};
+
+        orders.forEach(order => {
+
+            if (!order.items) return;
+
+            order.items.forEach(item => {
+
+                const cropName = item.cropName || "Unknown Crop";
+
+                if (!cropSales[cropName]) {
+                    cropSales[cropName] = {
+                        quantity: 0,
+                        orderIds: new Set(),
+                        sales: 0
+                    };
+                }
+
+                // Count only completed items
+                if (item.status === "COMPLETED") {
+
+                    cropSales[cropName].quantity += Number(item.quantity || 0);
+
+                    cropSales[cropName].sales += Number(item.lineTotal || 0);
+
+                    cropSales[cropName].orderIds.add(order.id);
+                }
+
+            });
+
+        });
+
+        const topCrops = Object.entries(cropSales)
+            .map(([name, data]) => ({
+                name,
+                quantity: data.quantity,
+                orders: data.orderIds.size,
+                sales: data.sales
+            }))
+            .filter(crop => crop.quantity > 0)
+            .sort((a, b) => b.quantity - a.quantity);
+
+        if (topCrops.length === 0) {
+            container.innerHTML = "<p>No completed crop sales available yet.</p>";
+            return;
+        }
+
+        container.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#f1f3f5;">
+                        <th style="padding:12px;text-align:left;">Rank</th>
+                        <th style="padding:12px;text-align:left;">Crop</th>
+                        <th style="padding:12px;text-align:left;">Quantity Sold</th>
+                        <th style="padding:12px;text-align:left;">Orders</th>
+                        <th style="padding:12px;text-align:left;">Sales Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${topCrops.map((crop, index) => `
+                        <tr>
+                            <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                #${index + 1}
+                            </td>
+
+                            <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                ${escapeHtml(crop.name)}
+                            </td>
+
+                            <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                ${crop.quantity}
+                            </td>
+
+                            <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                ${crop.orders}
+                            </td>
+
+                            <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                ₹${crop.sales.toLocaleString("en-IN")}
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+        container.textContent = error.message;
+
+    }
+}
+// PAYMENT ANALYTICS
+async function loadPaymentAnalytics() {
+
+    const container = document.getElementById("paymentAnalytics");
+    const token = sessionStorage.getItem("adminToken");
+
+    try {
+
+        const response = await fetch(API + "/api/admin/orders", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Unable to load payment analytics.");
+        }
+
+        const orders = await response.json();
+
+        const methods = [
+            "CASH_ON_DELIVERY",
+            "DIRECT_TO_FARMER"
+        ];
+
+        const paymentStatuses = [
+            "PENDING",
+            "PAID",
+            "FAILED",
+            "REFUNDED"
+        ];
+
+        const methodData = methods.map(method => {
+
+            const matchingOrders = orders.filter(
+                order => order.paymentMethod === method
+            );
+
+            const totalValue = matchingOrders.reduce(
+                (sum, order) => sum + Number(order.totalAmount || 0),
+                0
+            );
+
+            return {
+                method,
+                count: matchingOrders.length,
+                totalValue
+            };
+        });
+
+        const statusData = paymentStatuses.map(status => {
+
+            const matchingOrders = orders.filter(
+                order => order.paymentStatus === status
+            );
+
+            return {
+                status,
+                count: matchingOrders.length,
+                totalValue: matchingOrders.reduce(
+                    (sum, order) => sum + Number(order.totalAmount || 0),
+                    0
+                )
+            };
+        });
+
+        container.innerHTML = `
+            <h4>Payment Methods</h4>
+
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f1f3f5;">
+                            <th style="padding:12px;text-align:left;">Payment Method</th>
+                            <th style="padding:12px;text-align:left;">Orders</th>
+                            <th style="padding:12px;text-align:left;">Order Value</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${methodData.map(data => `
+                            <tr>
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ${data.method.replaceAll("_", " ")}
+                                </td>
+
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ${data.count}
+                                </td>
+
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ₹${data.totalValue.toLocaleString("en-IN")}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 style="margin-top:25px;">Payment Status</h4>
+
+            <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#f1f3f5;">
+                            <th style="padding:12px;text-align:left;">Status</th>
+                            <th style="padding:12px;text-align:left;">Orders</th>
+                            <th style="padding:12px;text-align:left;">Order Value</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${statusData.map(data => `
+                            <tr>
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ${data.status}
+                                </td>
+
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ${data.count}
+                                </td>
+
+                                <td style="padding:12px;border-bottom:1px solid #ddd;">
+                                    ₹${data.totalValue.toLocaleString("en-IN")}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+        container.textContent = error.message;
+
+    }
+}
+// EXPORT ORDERS TO CSV (EXCEL)
+async function exportOrdersToCSV() {
+
+    const token = sessionStorage.getItem("adminToken");
+
+    if (!token) {
+        alert("Please log in as admin first.");
+        return;
+    }
+
+    try {
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error("Unable to export orders.");
+        }
+
+        if (!orders || orders.length === 0) {
+            alert("No orders available to export.");
+            return;
+        }
+
+        const headers = [
+            "Order ID",
+            "Customer Name",
+            "Customer Email",
+            "Payment Method",
+            "Payment Status",
+            "Total Amount",
+            "Order Status",
+            "Order Date",
+            "Crop Name",
+            "Farmer Name",
+            "Quantity",
+            "Unit Price",
+            "Line Total",
+            "Item Status"
+        ];
+
+        const escapeCSV = value =>
+            '"' + String(value ?? "").replace(/"/g, '""') + '"';
+
+        const rows = [headers];
+
+        orders.forEach(order => {
+            (order.items || []).forEach(item => {
+                rows.push([
+                    order.id,
+                    order.customerName,
+                    order.customerEmail,
+                    order.paymentMethod,
+                    order.paymentStatus,
+                    order.totalAmount,
+                    order.status,
+                    order.createdAt,
+                    item.cropName,
+                    item.farmerName,
+                    item.quantity,
+                    item.unitPrice,
+                    item.lineTotal,
+                    item.status
+                ]);
+            });
+        });
+
+        const csvContent = "\uFEFF" +
+            rows.map(row => row.map(escapeCSV).join(",")).join("\r\n");
+
+        const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "AI_Kishan_Market_Orders.csv";
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+
+        alert("Orders exported successfully!");
+
+    } catch (error) {
+        console.error(error);
+        alert("Export failed: " + error.message);
+    }
+}
+
+// VIEW COMPLETE ORDER DETAILS
+async function viewOrderDetails(orderId) {
+
+    const token = sessionStorage.getItem("adminToken");
+
+    if (!token) {
+        alert("Please log in as admin first.");
+        return;
+    }
+
+    try {
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error("Unable to load order details");
+        }
+
+        const order = orders.find(
+            o => Number(o.id) === Number(orderId)
+        );
+
+        if (!order) {
+            alert("Order not found!");
+            return;
+        }
+
+        const content = document.getElementById("orderDetailsContent");
+        const modal = document.getElementById("orderDetailsModal");
+
+        content.innerHTML = `
+            <h3>Order #${order.id}</h3>
+
+            <h4>Customer Information</h4>
+            <p>Name: ${escapeHtml(order.customerName)}</p>
+            <p>Email: ${escapeHtml(order.customerEmail)}</p>
+            <p>Customer ID: ${order.customerId}</p>
+
+            <hr>
+
+            <h4>Payment Information</h4>
+            <p>Payment Method: ${escapeHtml(order.paymentMethod)}</p>
+            <p>Payment Status: ${escapeHtml(order.paymentStatus)}</p>
+            <p>Total Amount: ₹${order.totalAmount}</p>
+
+            <hr>
+
+            <h4>Order Information</h4>
+            <p>Order Status: ${escapeHtml(order.status)}</p>
+            <p>Order Date: ${escapeHtml(order.createdAt)}</p>
+
+            <hr>
+
+            <h4>Purchased Products</h4>
+
+            ${(order.items || []).map(item => `
+                <div style="background:#f5f5f5;padding:12px;margin:10px 0;border-radius:6px">
+
+                    <h4>${escapeHtml(item.cropName)}</h4>
+                    <p>Crop ID: ${item.cropId}</p>
+                    <p>Farmer: ${escapeHtml(item.farmerName || "-")}</p>
+                    <p>Farmer ID: ${item.farmerId}</p>
+                    <p>Quantity: ${item.quantity}</p>
+                    <p>Unit Price: ₹${item.unitPrice}</p>
+                    <p>Line Total: ₹${item.lineTotal}</p>
+                    <p>Item Status: ${escapeHtml(item.status || "PENDING")}</p>
+
+                </div>
+            `).join("")}
+        `;
+
+        modal.style.display = "block";
+
+    } catch (error) {
+        console.error(error);
+        alert("Error: " + error.message);
+    }
+}
+
+
+// CLOSE ORDER DETAILS POPUP
+function closeOrderDetails() {
+    document.getElementById("orderDetailsModal").style.display = "none";
+}
+
+
+// Search orders by ID, customer name or email
+async function searchOrders() {
+    const searchValue = document
+        .getElementById("orderSearch")
+        .value.trim().toLowerCase();
+
+    const token = sessionStorage.getItem("adminToken");
+    const orderList = document.getElementById("orderList");
+
+    if (!token) {
+        orderList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    orderList.textContent = "Searching orders...";
+
+    try {
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error(orders.message || "Unable to search orders");
+        }
+
+        const filteredOrders = orders.filter(order =>
+            String(order.id).includes(searchValue) ||
+            (order.customerName || "").toLowerCase().includes(searchValue) ||
+            (order.customerEmail || "").toLowerCase().includes(searchValue)
+        );
+
+        displayOrders(filteredOrders);
+
+    } catch (error) {
+        orderList.textContent = "Error: " + error.message;
+    }
+}
+
+async function filterOrders() {
+
+    const orderStatus =
+        document.getElementById("orderStatusFilter").value;
+
+    const paymentStatus =
+        document.getElementById("paymentStatusFilter").value;
+
+    const token = sessionStorage.getItem("adminToken");
+    const orderList = document.getElementById("orderList");
+
+    if (!token) {
+        orderList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    orderList.textContent = "Filtering orders...";
+
+    try {
+        const response = await fetch(API + "/api/admin/orders", {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const orders = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                orders.message || "Unable to filter orders"
+            );
+        }
+
+        const filteredOrders = orders.filter(order => {
+
+            const matchesOrderStatus =
+                !orderStatus || order.status === orderStatus;
+
+            const matchesPaymentStatus =
+                !paymentStatus || order.paymentStatus === paymentStatus;
+
+            return matchesOrderStatus && matchesPaymentStatus;
+        });
+
+        displayOrders(filteredOrders);
+
+    } catch (error) {
+        orderList.textContent = "Error: " + error.message;
+    }
+}
+
+
+function resetOrderFilters() {
+
+    document.getElementById("orderStatusFilter").value = "";
+    document.getElementById("paymentStatusFilter").value = "";
+    document.getElementById("orderSearch").value = "";
+
+    loadOrders();
+}
+
+async function updateAdminItemStatus(itemId) {
+    const token = sessionStorage.getItem("adminToken");
+    const select = document.getElementById("status-" + itemId);
+
+    if (!token || !select) {
+        alert("Please log in as admin first.");
+        return;
+    }
+
+    const status = select.value;
+
+    if (!confirm("Change this item's status to " + status + "?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            API + "/api/admin/orders/items/" + itemId + "/status",
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ status: status })
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Status update failed");
+        }
+
+        alert("Order item status updated successfully!");
+        await loadOrders();
+
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+}
+
+
+async function loadCrops() {
+    const token = sessionStorage.getItem("adminToken");
+    const cropList = document.getElementById("cropList");
+
+    if (!token) {
+        cropList.textContent = "Please log in as admin first.";
+        return;
+    }
+
+    cropList.textContent = "Loading crops...";
+
+    try {
+        const response = await fetch(
+            API + "/api/admin/crops",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const crops = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                crops.message || "Unable to load crops"
+            );
+        }
+
+        if (crops.length === 0) {
+            cropList.textContent = "No crops available.";
+            return;
+        }
+
+        
+cropList.innerHTML = crops.map(crop => `
+    <div style="background:#eaf5ee;padding:15px;margin:10px 0;border-radius:8px">
+
+        <h3>${escapeHtml(crop.name)}</h3>
+
+        <p>Crop ID: ${crop.id}</p>
+        <p>Location: ${escapeHtml(crop.location)}</p>
+        <p>Price: ₹${crop.price}</p>
+        <p>Quantity: ${crop.quantity}</p>
+        <p>Farmer: ${escapeHtml(crop.farmerName || "-")}</p>
+        <p>Farmer ID: ${crop.farmerId ?? "-"}</p>
+        <p>Description: ${escapeHtml(crop.description || "-")}</p>
+
+        <button onclick="editCrop(${crop.id})">
+            Edit Crop
+        </button>
+
+        <button
+            style="background:#dc3545"
+            onclick="deleteCrop(${crop.id})">
+            Delete Crop
+        </button>
+
+    </div>
+`).join("");
+
+    } catch (error) {
+        cropList.textContent = "Error: " + error.message;
+    }
+}
+
+
+
+async function editCrop(id) {
+    const token = sessionStorage.getItem("adminToken");
+
+    // Get existing crop details from the displayed list
+    const response = await fetch(
+        API + "/api/admin/crops",
+        {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        }
+    );
+
+    if (!response.ok) {
+        alert("Unable to retrieve crop details.");
+        return;
+    }
+
+    const crops = await response.json();
+    const crop = crops.find(item => item.id === id);
+
+    if (!crop) {
+        alert("Crop not found.");
+        return;
+    }
+
+    const name = prompt("Crop name:", crop.name);
+    if (name === null) return;
+
+    const location = prompt("Location:", crop.location);
+    if (location === null) return;
+
+    const price = prompt("Price:", crop.price);
+    if (price === null) return;
+
+    const quantity = prompt("Quantity:", crop.quantity);
+    if (quantity === null) return;
+
+    const description = prompt(
+        "Description:",
+        crop.description || ""
+    );
+    if (description === null) return;
+
+    if (
+        !name.trim() ||
+        !location.trim() ||
+        !Number.isFinite(Number(price)) ||
+        Number(price) <= 0 ||
+        !Number.isFinite(Number(quantity)) ||
+        Number(quantity) <= 0
+    ) {
+        alert("Please enter valid crop details.");
+        return;
+    }
+
+    try {
+        const updateResponse = await fetch(
+            API + "/api/admin/crops/" + id,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({
+                    name: name.trim(),
+                    location: location.trim(),
+                    price: Number(price),
+                    quantity: Number(quantity),
+                    description: description
+                })
+            }
+        );
+
+        const data = await updateResponse.json();
+
+        if (!updateResponse.ok) {
+            throw new Error(data.message || "Update failed");
+        }
+
+        alert("Crop updated successfully!");
+
+        await loadCrops();
+
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+}
+
+
+async function deleteCrop(id) {
+    const token = sessionStorage.getItem("adminToken");
+
+    const confirmed = confirm(
+        "Are you sure you want to delete crop ID " + id + "?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(
+            API + "/api/admin/crops/" + id,
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Crop deletion failed");
+        }
+
+        alert("Crop deleted successfully!");
+
+        await loadCrops();
+
+    } catch (error) {
+        alert("Error: " + error.message);
+    }
+}
+
+
+    async function loadDashboard() {
+
+        const token = sessionStorage.getItem("adminToken");
+
+        const response = await fetch(
+            API + "/api/admin/dashboard/stats",
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Dashboard loading failed");
+        }
+
+        document.getElementById("farmers").textContent =
+            data.totalFarmers;
+
+        document.getElementById("customers").textContent =
+            data.totalCustomers;
+
+        document.getElementById("crops").textContent =
+            data.totalCrops;
+
+        document.getElementById("orders").textContent =
+            data.totalOrders;
+        document.getElementById("mainTitle").textContent =
+    "AI Kishan Market – Admin Dashboard";
+        document.getElementById("dashboard").hidden = false;
+        document.getElementById("loginPanel").hidden = true;
+        await loadAnalytics();
+
+    }
+    
+
+function adminLogout() {
+
+    if (!confirm("Are you sure you want to logout?")) {
+        return;
+    }
+
+    sessionStorage.removeItem("adminToken");
+
+    const dashboard = document.getElementById("dashboard");
+    const loginPanel = document.getElementById("loginPanel");
+    const mainTitle = document.getElementById("mainTitle");
+    const message = document.getElementById("message");
+    const password = document.getElementById("password");
+
+    if (dashboard) dashboard.hidden = true;
+    if (loginPanel) loginPanel.hidden = false;
+
+    if (mainTitle) {
+        mainTitle.textContent = "AI Kishan Market";
+    }
+
+    if (message) message.textContent = "";
+    if (password) password.value = "";
+
+    alert("You have been logged out successfully!");
+}
+
+</script>
+
+</body>
+</html>

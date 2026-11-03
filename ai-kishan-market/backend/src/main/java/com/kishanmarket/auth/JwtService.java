@@ -1,6 +1,6 @@
 
 package com.kishanmarket.auth;
-
+import com.kishanmarket.admin.AdminEntity;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
@@ -67,4 +67,17 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+    public String generateAdminToken(AdminEntity admin) {
+    Date now = new Date();
+    Date expiry = new Date(now.getTime() + expirationMs);
+
+    return Jwts.builder()
+            .subject(admin.getEmail())
+            .claim("adminId", admin.getId())
+            .claim("role", admin.getRole())
+            .issuedAt(now)
+            .expiration(expiry)
+            .signWith(signingKey)
+            .compact();
+}
 }

@@ -36,27 +36,32 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+public CorsConfigurationSource corsConfigurationSource() {
 
-        config.setAllowedOrigins(
-            List.of("http://localhost:5173")
-        );
+    CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedMethods(
-            List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        );
+    config.setAllowedOrigins(
+        List.of(
+            "http://localhost:5173",
+            "http://127.0.0.1:5500"
+        )
+    );
 
-        config.setAllowedHeaders(List.of("*"));
+    config.setAllowedMethods(
+        List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+    );
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+    config.setAllowedHeaders(List.of("*"));
 
-        source.registerCorsConfiguration("/**", config);
+    config.setAllowCredentials(true);
 
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source =
+        new UrlBasedCorsConfigurationSource();
 
+    source.registerCorsConfiguration("/**", config);
+
+    return source;
+}
     
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -71,12 +76,13 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http)
         
 .authorizeHttpRequests(auth -> auth
     .requestMatchers(
-        "/api/health",
-        "/api/auth/register",
-        "/api/auth/login",
-        "/api/customer/auth/register",
-        "/api/customer/auth/login"
-    ).permitAll()
+    "/api/health",
+    "/api/auth/register",
+    "/api/auth/login",
+    "/api/customer/auth/register",
+    "/api/customer/auth/login",
+    "/api/admin/auth/login"
+).permitAll()
 
     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
@@ -121,6 +127,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http)
         HttpMethod.DELETE,
         "/api/crops/**"
     ).hasRole("FARMER")
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
     .anyRequest().authenticated()
 )

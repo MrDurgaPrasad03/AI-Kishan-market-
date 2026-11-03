@@ -26,68 +26,63 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+    
+@Override
+protected void doFilterInternal(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain)
+        throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-        System.out.println("JWT DEBUG - Request: " + request.getMethod() + " " + request.getRequestURI());
-        System.out.println("JWT DEBUG - Authorization header present: " + (header != null));
-        System.out.println("JWT DEBUG - Method and path: "
-        + request.getMethod() + " " + request.getRequestURI());
-        
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+    String header = request.getHeader("Authorization");
 
-            try {
-                Claims claims = jwtService.validateAndGetClaims(token);
-                System.out.println("JWT DEBUG - Token validated successfully");
-                System.out.println("JWT DEBUG - Role: " + claims.get("role"));
-                 System.out.println("JWT DEBUG - Customer ID: " + claims.get("customerId"));
-                System.out.println("JWT DEBUG - Farmer ID: " + claims.get("farmerId"));
-                String email = claims.getSubject();
-                String role = claims.get("role", String.class);
+    if (header != null && header.startsWith("Bearer ")) {
+        String token = header.substring(7);
 
-                Long accountId = null;
+        try {
+            Claims claims = jwtService.validateAndGetClaims(token);
 
-                if ("FARMER".equals(role)) {
-                    accountId = claims.get("farmerId", Long.class);
-                } else if ("CUSTOMER".equals(role)) {
-                    accountId = claims.get("customerId", Long.class);
-                }
+            String email = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-                if (email != null
-                        && role != null
-                        && accountId != null
-                        && SecurityContextHolder.getContext()
-                                .getAuthentication() == null) {
+            Long accountId = null;
 
-                    var authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    email,
-                                    accountId,
-                                    List.of(new SimpleGrantedAuthority(
-                                            "ROLE_" + role))
-                            );
-
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
-                }
-
-            } catch (JwtException | IllegalArgumentException ex) {
-                response.setStatus(
-                        HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(
-                        "{\"message\":\"Invalid or expired access token\"}");
-                return;
+            if ("FARMER".equals(role)) {
+                accountId = claims.get("farmerId", Long.class);
+            } else if ("CUSTOMER".equals(role)) {
+                accountId = claims.get("customerId", Long.class);
+            } else if ("ADMIN".equals(role)) {
+                accountId = claims.get("adminId", Long.class);
             }
-        }
 
-        filterChain.doFilter(request, response);
+            if (email != null
+                    && role != null
+                    && accountId != null
+                    && SecurityContextHolder.getContext()
+                            .getAuthentication() == null) {
+
+                var authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                accountId,
+                                List.of(new SimpleGrantedAuthority(
+                                        "ROLE_" + role))
+                        );
+
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
+            }
+
+        } catch (JwtException | IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(
+                    "{\"message\":\"Invalid or expired access token\"}");
+            return;
+        }
     }
+
+    filterChain.doFilter(request, response);
+}
 }
